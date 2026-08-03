@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RestrauntsManagement.Tests/DotNetRestaurantManagement.Tests.csproj" Id="0028089f-c168-4ce2-a4af-2e9c3ef6c8ad" />
+  <Project Path="RestrauntsManagement/DotNetRestaurantManagement.csproj" Id="6bdd08f6-5f89-4614-9ea5-d11f924b1871" />
+</Solution>

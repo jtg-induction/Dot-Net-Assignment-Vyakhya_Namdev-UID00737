@@ -40,7 +40,7 @@ namespace DotNetRestaurantManagement.Models.DTO
         public string State { get; set; }
 
         [Required]
-        [RegularExpression(@"^[1-9][0-9]{5}$", ErrorMessage = "Pin code must contain 6 digits.")]
+        [RegularExpression(@"^[1-9][0-9]{5}$", ErrorMessage = "Pin code must contain 6 digits!")]
         public string PinCode { get; set; }
 
         [Required]

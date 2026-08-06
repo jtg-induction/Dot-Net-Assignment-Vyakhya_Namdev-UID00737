@@ -7,9 +7,8 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
     {
         Task<bool> EmailExistsAsync(string email);
         Task<bool> PhoneNumberExistsAsync(string phoneNumber);
-
         void AddUser(User user);
-
         Task SaveChanges();
+        Task<User> GetByEmailAsync(string email);
     }
 }

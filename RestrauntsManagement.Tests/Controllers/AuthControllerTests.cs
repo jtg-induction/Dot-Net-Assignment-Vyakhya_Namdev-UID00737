@@ -13,7 +13,7 @@ using System.Web.Http.Results;
 namespace RestrauntsManagement.Tests.Controllers
 {
     [TestClass]
-    public class SignupControllerTests
+    public class AuthControllerTests
     {
         private Mock<IAuthService> _authServiceMock;
         private AuthController _controller;
@@ -23,6 +23,9 @@ namespace RestrauntsManagement.Tests.Controllers
         {
             _authServiceMock = new Mock<IAuthService>();
             _controller = new AuthController(_authServiceMock.Object);
+            var request = new HttpRequest("", "http://localhost/", "");
+            var response = new HttpResponse(new StringWriter());
+            HttpContext.Current = new HttpContext(request, response);
         }
 
         private SignupRequest GetValidRequest()
@@ -172,17 +175,87 @@ namespace RestrauntsManagement.Tests.Controllers
                         r.Email == "vyakhyanamdev@test.com" &&
                         r.PhoneNumber == "9876543210"
                     )),
+            )
+        }
+        
+        public async Task Login_WithInvalidCredentials_ShouldReturnUnauthorized()
+        {
+            LoginRequest request = new LoginRequest
+            {
+                Email = "vyakhya@test.com",
+                Password = "WrongPassword"
+            };
+
+            _authServiceMock
+                .Setup(x => x.LoginAsync(request))
+                .ThrowsAsync(new InvalidCredentialsException());
+            IHttpActionResult result = await _controller.Login(request);
+            result.Should().BeOfType<UnauthorizedResult>();
+            _authServiceMock.Verify(
+                x => x.LoginAsync(request),
                 Times.Once);
         }
 
         [TestMethod]
-        public void Constructor_NullAuthService_ThrowsArgumentNullException()
+        public async Task Login_WhenServiceThrowsException_ShouldReturnInternalServerError()
         {
-            // Act
-            Action act = () => new AuthController(null);
+            LoginRequest request = new LoginRequest
+            {
+                Email = "vyakhya@test.com",
+                Password = "Vyakhya@123"
+            };
 
-            // Assert
-            act.Should().Throw<ArgumentNullException>();
+            _authServiceMock
+                .Setup(x => x.LoginAsync(request))
+                .ThrowsAsync(
+                    new System.Exception("Database error"));
+
+            IHttpActionResult result = await _controller.Login(request);
+            result.Should().BeOfType<InternalServerErrorResult>();
+            _authServiceMock.Verify(
+                x => x.LoginAsync(request),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task Login_ShouldPassCorrectRequestToService()
+        {
+            LoginRequest request = new LoginRequest
+            {
+                Email = "vyakhya@test.com",
+                Password = "Vyakhya@123"
+            };
+
+            LoginResponse response = new LoginResponse
+            {
+                AccessToken = "access-token",
+                RefreshToken = "refresh-token",
+                Name = "Vyakhya",
+                Email = "vyakhya@test.com",
+            };
+
+            _authServiceMock
+                .Setup(x => x.LoginAsync(It.IsAny<LoginRequest>()))
+                .ReturnsAsync(response);
+
+            await _controller.Login(request);
+            _authServiceMock.Verify(
+                service => service.LoginAsync(
+                    It.Is<LoginRequest>(req =>
+                        req.Email == "vyakhya@test.com" &&
+                        req.Password == "Vyakhya@123")),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task Login_WithNullRequest_ShouldNotCallService()
+        {
+            IHttpActionResult result = await _controller.Login(null);
+            result.Should().NotBeNull();
+            _authServiceMock.Verify(
+                x => x.LoginAsync(
+                    It.IsAny<LoginRequest>()),
+                Times.Never);
         }
     }
 }

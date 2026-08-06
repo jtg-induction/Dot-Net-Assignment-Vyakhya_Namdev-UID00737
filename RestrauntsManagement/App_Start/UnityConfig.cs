@@ -1,4 +1,5 @@
 using DotNetRestaurantManagement.Data;
+using DotNetRestaurantManagement.Repositories;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Implementations;
 using DotNetRestaurantManagement.Services.Interfaces;
@@ -27,6 +28,8 @@ namespace DotNetRestaurantManagement
             container.RegisterType<IPasswordHasher, PasswordHasher>(new ContainerControlledLifetimeManager());
             // Registers IAuthService with its concrete implementation.
             container.RegisterType<IAuthService, AuthService>(new HierarchicalLifetimeManager());
+            container.RegisterType<IRefreshTokenRepository, RefreshTokenRepository>(new HierarchicalLifetimeManager());
+            container.RegisterType<IJwtService, JwtService>();
             // Sets Unity as the dependency resolver for Web API.
             GlobalConfiguration.Configuration.DependencyResolver = new UnityDependencyResolver(container);
         }

@@ -98,5 +98,26 @@ namespace DotNetRestaurantManagement.Tests.Services
             bool result = _passwordHasher.Verify("Vyakhya@123", "");
             result.Should().BeFalse();
         }
+
+        [TestMethod]
+        public void Verify_HashedPassword_ReturnsTrue()
+        {            
+            string password = "Vyakhya@123";
+            string hash = _passwordHasher.Hash(password);
+            _passwordHasher.Verify(password, hash).Should().BeTrue();
+        }
+
+        [TestMethod]
+        public void Hash_SamePassword_GeneratesDifferentHashes()
+        {
+            string password = "Vyakhya@123";
+            string hash1 = _passwordHasher.Hash(password);
+            string hash2 = _passwordHasher.Hash(password);
+
+            hash1.Should().NotBe(hash2);
+            _passwordHasher.Verify(password, hash1).Should().BeTrue();
+            _passwordHasher.Verify(password, hash2).Should().BeTrue();
+        }
+
     }
 }

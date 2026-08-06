@@ -9,9 +9,12 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
     public class UserRepository : IUserRepository, IDisposable
     {
         private readonly RestaurantDbContext _context;
-
         public UserRepository(RestaurantDbContext context){
             _context = context ?? throw new ArgumentNullException(nameof(context));
+        }
+
+        public async Task<User> GetByEmailAsync(string email){
+            return await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
         }
 
         public async Task<bool> EmailExistsAsync(string email){

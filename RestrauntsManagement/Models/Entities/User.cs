@@ -15,6 +15,7 @@ namespace DotNetRestaurantManagement.Models.Entities
             UserAddresses = new HashSet<UserAddress>();
             Restaurants = new HashSet<Restaurant>();
             Orders = new HashSet<Order>();
+            RefreshTokens = new HashSet<RefreshToken>();
         }
 
         [Key]
@@ -49,11 +50,13 @@ namespace DotNetRestaurantManagement.Models.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public long TokenVersion { get; set; } = 1;
 
         public virtual ICollection<UserAddress> UserAddresses { get; set; }
 
         public virtual ICollection<Restaurant> Restaurants { get; set; }
 
         public virtual ICollection<Order> Orders { get; set; }
+        public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
     }
 }

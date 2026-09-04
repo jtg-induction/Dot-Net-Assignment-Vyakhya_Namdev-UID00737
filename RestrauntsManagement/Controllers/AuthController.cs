@@ -3,9 +3,11 @@ using DotNetRestaurantManagement.Services.Interfaces;
 using DotNetRestaurantManagement.Exceptions;
 using System;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace DotNetRestaurantManagement.Controllers
 {
@@ -118,6 +120,173 @@ namespace DotNetRestaurantManagement.Controllers
             {
                 Message = "Logged out successfully!"
             });
+        }
+
+        [HttpPut]
+        [Route("update-profile")]
+        public async Task<IHttpActionResult> UpdateProfile(
+    UpdateProfileRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Request body is required!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                int userId = GetUserIdFromClaims();
+
+                var response =
+                    await _authService.UpdateProfileAsync(
+                        userId,
+                        request);
+
+                return Ok(response);
+            }
+            catch (DuplicateEmailException ex)
+            {
+                return Content(
+                    HttpStatusCode.Conflict,
+                    new ErrorResponse { Message = ex.Message });
+            }
+            catch (DuplicatePhoneNumberException ex)
+            {
+                return Content(
+                    HttpStatusCode.Conflict,
+                    new ErrorResponse { Message = ex.Message });
+            }
+            catch (PhoneNumberAlreadyRegistered ex)
+            {
+                return Content(
+                    HttpStatusCode.Conflict,
+                    new ErrorResponse { Message = ex.Message });
+            }
+            catch (UserNotFound)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
+            }
+            catch (Exception)
+            {
+                return InternalServerError();
+            }
+        }
+
+        private int GetUserIdFromClaims()
+        {
+            var claimsIdentity = User.Identity as ClaimsIdentity;
+
+            var userIdClaim =
+                claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)
+                ?? claimsIdentity?.FindFirst(JwtRegisteredClaimNames.Sub);
+
+            if (userIdClaim == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            return userId;
+        }
+
+        [HttpPut]
+        [Route("update-password")]
+        public async Task<IHttpActionResult> ChangePassword(
+    ChangePasswordRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Request body is required!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                int userId = GetUserIdFromClaims();
+
+                await _authService.ChangePasswordAsync(
+                    userId,
+                    request);
+
+                return Ok(new
+                {
+                    Message = "Password updated successfully!"
+                });
+            }
+            catch (InvalidCredentialsException)
+            {
+                return Unauthorized();
+            }
+            catch (UserNotFound)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
+            }
+            catch (Exception)
+            {
+                return InternalServerError();
+            }
+        }
+
+        [HttpPost]
+        [Route("update-address")]
+        public async Task<IHttpActionResult> AddAddress(
+    AddressRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Request body is required!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                int userId = GetUserIdFromClaims();
+
+                var response =
+                    await _authService.AddAddressAsync(
+                        userId,
+                        request);
+
+                return Content(
+                    HttpStatusCode.Created,
+                    response);
+            }
+            catch (UserNotFound)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized();
+            }
+            catch (Exception)
+            {
+                return InternalServerError();
+            }
         }
     }
 }

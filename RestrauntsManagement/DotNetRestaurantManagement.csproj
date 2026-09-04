@@ -208,7 +208,9 @@
     <Compile Include="Filters\ValidateModelStateAttribute.cs" />
     <Compile Include="Exceptions\InvalidCredentialsException.cs" />
     <Compile Include="Exceptions\InvalidRefreshTokenException.cs" />
+    <Compile Include="Exceptions\PhoneNumberAlreadyRegistered.cs" />
     <Compile Include="Exceptions\UserInactiveException.cs" />
+    <Compile Include="Exceptions\UserNotFound.cs" />
     <Compile Include="Exceptions\ValidEmailException.cs" />
     <Compile Include="Exceptions\ValidPasswordException.cs" />
     <Compile Include="Global.asax.cs">
@@ -224,10 +226,16 @@
       <DependentUpon>202609081543009_AddRefreshTokenTable.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Models\DTO\AddressRequest.cs" />
+    <Compile Include="Models\DTO\AddressResponse.cs" />
+    <Compile Include="Models\DTO\ChangePasswordRequest.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />
     <Compile Include="Models\DTO\SignupResponse.cs" />
     <Compile Include="Models\DTO\LoginRequest.cs" />
+    <Compile Include="Models\DTO\UpdateProfileRequest.cs" />
+    <Compile Include="Models\DTO\UpdateProfileResponse.cs" />
     <Compile Include="Models\Entities\Address.cs" />
     <Compile Include="Models\Entities\MenuItem.cs" />
     <Compile Include="Models\Entities\Order.cs" />

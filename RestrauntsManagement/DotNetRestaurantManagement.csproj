@@ -226,7 +226,6 @@
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
-    <Compile Include="Models\DTO\LoginUserResponse.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />
     <Compile Include="Models\DTO\SignupResponse.cs" />
     <Compile Include="Models\DTO\LoginRequest.cs" />

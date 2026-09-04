@@ -224,11 +224,17 @@
       <DependentUpon>202609101146127_RefreshTableAdded.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Models\DTO\AddressRequest.cs" />
+    <Compile Include="Models\DTO\AddressResponse.cs" />
+    <Compile Include="Models\DTO\ChangePasswordRequest.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
     <Compile Include="Models\DTO\RefreshTokenRequest.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />
     <Compile Include="Models\DTO\SignupResponse.cs" />
     <Compile Include="Models\DTO\LoginRequest.cs" />
+    <Compile Include="Models\DTO\UpdateProfileRequest.cs" />
+    <Compile Include="Models\DTO\UpdateProfileResponse.cs" />
     <Compile Include="Models\Entities\Address.cs" />
     <Compile Include="Models\Entities\BaseEntity.cs" />
     <Compile Include="Models\Entities\MenuItem.cs" />

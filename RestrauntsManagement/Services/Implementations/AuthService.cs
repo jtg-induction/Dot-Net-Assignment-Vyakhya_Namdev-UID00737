@@ -152,5 +152,16 @@ namespace DotNetRestaurantManagement.Services.Implementations
             await _refreshTokenRepository.Delete(existingToken);
             await _refreshTokenRepository.SaveChangesAsync();
         }
+
+        public async Task DeactivateAccountAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || !user.IsActive) throw new UserNotFound();
+            user.IsActive = false;
+
+            // Invalidate all existing JWT access tokens
+            user.TokenVersion++;
+            await _userRepository.SaveChanges();
+        }
     }
 }

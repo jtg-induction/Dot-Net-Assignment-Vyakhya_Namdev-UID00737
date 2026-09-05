@@ -4,6 +4,7 @@ using System;
 using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Web;
@@ -28,24 +29,30 @@ namespace DotNetRestaurantManagement.Filters
                 if (cookie == null || string.IsNullOrWhiteSpace(cookie.Value)) return false;
                 string token = cookie.Value;
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(ConfigurationManager.AppSettings["JwtSecret"]);
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigurationManager.AppSettings["JwtSecret"]));
                 SecurityToken validatedToken;
                 var userInfo = tokenHandler.ValidateToken(
-                    token,
+                    cookie.Value,
                     new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = key,
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
                         ValidateLifetime = true,
-                        ClockSkew = TimeSpan.Zero,
+                        ClockSkew = TimeSpan.Zero
                     },
                     out validatedToken);
 
-                var userIdClaim = userInfo.FindFirst(JwtRegisteredClaimNames.Sub);
+                var userIdClaim = 
+                    userInfo.FindFirst(JwtRegisteredClaimNames.Sub)
+                    ?? userInfo.FindFirst(ClaimTypes.NameIdentifier)
+                    ?? userInfo.FindFirst("sub");
                 if (userIdClaim == null) return false;
                 long userId = Convert.ToInt64(userIdClaim.Value);
                 var user = _context.Users.FirstOrDefault(x => x.Id == userId);
-                if (user == null) return false;
-                if (!user.IsActive) return false;
+                if (user == null || !user.IsActive) return false;
+                if (user.TokenVersion != tokenVersion) return false;
                 HttpContext.Current.User = userInfo;
                 Thread.CurrentPrincipal = userInfo;
                 return true;

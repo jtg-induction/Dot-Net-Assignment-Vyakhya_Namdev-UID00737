@@ -664,5 +664,354 @@ namespace DotNetRestaurantManagement.Tests.Services
                 x => x.DeleteAsync(It.IsAny<RefreshToken>()),
                 Times.Never);
         }
+
+        [TestMethod]
+        public async Task UpdateProfileAsync_ShouldUpdateProfileSuccessfully()
+        {
+            var user = new User
+            {
+                Id = 8,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhya@gmail.com",
+                PhoneNumber = "9876543210"
+            };
+
+            var request = new UpdateProfileRequest
+            {
+                Name = " Vyakhya Namdev ",
+                Email = "VYAKHYA.NEW@GMAIL.COM",
+                PhoneNumber = " 9081231239 "
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync(user);
+
+            _userRepositoryMock
+                .Setup(x => x.EmailExistsForOtherUserAsync(
+                    It.IsAny<string>(), 8))
+                .ReturnsAsync(false);
+
+            _userRepositoryMock
+                .Setup(x => x.PhoneNumberExistsForOtherUserAsync(
+                    It.IsAny<string>(), 8))
+                .ReturnsAsync(false);
+
+            var result = await _authService.UpdateProfileAsync(8, request);
+            result.Should().NotBeNull();
+            result.Id.Should().Be(8);
+            result.Name.Should().Be("Vyakhya Namdev");
+            result.Email.Should().Be("vyakhya.new@gmail.com");
+            result.PhoneNumber.Should().Be("9081231239");
+            _userRepositoryMock.Verify(
+                x => x.UpdateProfileAsync(
+                    8,
+                    "Vyakhya Namdev",
+                    "vyakhya.new@gmail.com",
+                    "9081231239"),
+                Times.Once);
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task UpdateProfileAsync_ShouldThrowUserNotFound_WhenUserDoesNotExist()
+        {
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync((User)null);
+            var request = new UpdateProfileRequest
+            {
+                Name = "Vyakhya Namdev",
+                Email = "vyakhya@gmail.com",
+                PhoneNumber = "9876543210"
+            };
+
+            Func<Task> act = async () => await _authService.UpdateProfileAsync(8, request);
+            await act.Should().ThrowAsync<UserNotFound>();
+        }
+
+        [TestMethod]
+        public async Task UpdateProfileAsync_ShouldThrowDuplicateEmail_WhenEmailAlreadyExists()
+        {
+            var user = new User
+            {
+                Id = 8,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhya@gmail.com",
+                PhoneNumber = "9876543210"
+            };
+
+            var request = new UpdateProfileRequest
+            {
+                Name = "Vyakhya Namdev",
+                Email = "another@gmail.com",
+                PhoneNumber = "9876543210"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync(user);
+
+            _userRepositoryMock
+                .Setup(x => x.EmailExistsForOtherUserAsync(
+                    "another@gmail.com", 8))
+                .ReturnsAsync(true);
+            Func<Task> act = async () => await _authService.UpdateProfileAsync(8, request);
+            await act.Should().ThrowAsync<DuplicateEmailException>();
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        public async Task UpdateProfileAsync_ShouldThrowDuplicatePhone_WhenPhoneAlreadyExists()
+        {
+            var user = new User
+            {
+                Id = 8,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhya@gmail.com",
+                PhoneNumber = "9876543210"
+            };
+            var request = new UpdateProfileRequest
+            {
+                Name = "Vyakhya Namdev",
+                Email = "new@gmail.com",
+                PhoneNumber = "9999999999"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync(user);
+
+            _userRepositoryMock
+                .Setup(x => x.EmailExistsForOtherUserAsync(
+                    "new@gmail.com", 8))
+                .ReturnsAsync(false);
+
+            _userRepositoryMock
+                .Setup(x => x.PhoneNumberExistsForOtherUserAsync(
+                    "9999999999", 8))
+                .ReturnsAsync(true);
+
+            Func<Task> act = async () => await _authService.UpdateProfileAsync(8, request);
+            await act.Should().ThrowAsync<PhoneNumberAlreadyRegistered>();
+            _userRepositoryMock.Verify(
+               x => x.SaveChanges(),
+               Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_ShouldChangePasswordSuccessfully()
+        {
+            var user = new User
+            {
+                Id = 8,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhya@gmail.com",
+                Password = "old-hashed-password"
+            };
+
+            var request = new ChangePasswordRequest
+            {
+                CurrentPassword = "OldPassword123",
+                NewPassword = "NewPassword123"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync(user);
+
+            _passwordHasherMock
+                .Setup(x => x.Verify(
+                    "OldPassword123",
+                    "old-hashed-password"))
+                .Returns(true);
+
+            _passwordHasherMock
+                .Setup(x => x.Hash("NewPassword123"))
+                .Returns("new-hashed-password");
+            await _authService.ChangePasswordAsync(8, request);
+
+            user.Password.Should().Be("new-hashed-password");
+
+            _passwordHasherMock.Verify(
+                x => x.Verify(
+                    "OldPassword123",
+                    "old-hashed-password"),
+                Times.Once);
+
+            _passwordHasherMock.Verify(
+                x => x.Hash("NewPassword123"),
+                Times.Once);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_ShouldThrowInvalidCredentials_WhenCurrentPasswordIsWrong()
+        {
+            var user = new User
+            {
+                Id = 8,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhya@gmail.com",
+                Password = "old-hashed-password"
+            };
+
+            var request = new ChangePasswordRequest
+            {
+                CurrentPassword = "WrongPassword",
+                NewPassword = "NewPassword123"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync(user);
+
+            _passwordHasherMock
+                .Setup(x => x.Verify(
+                    "WrongPassword",
+                    "old-hashed-password"))
+                .Returns(false);
+
+            Func<Task> act = async () => await _authService.ChangePasswordAsync(8, request);
+            await act.Should().ThrowAsync<InvalidCredentialsException>();
+            _passwordHasherMock.Verify(
+                x => x.Hash(It.IsAny<string>()),
+                Times.Never);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ChangePasswordAsync_ShouldThrowUserNotFound_WhenUserDoesNotExist()
+        {
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync((User)null);
+
+            var request = new ChangePasswordRequest
+            {
+                CurrentPassword = "OldPassword123",
+                NewPassword = "NewPassword123"
+            };
+
+            Func<Task> act = async () => await _authService.ChangePasswordAsync(8, request);
+            await act.Should().ThrowAsync<UserNotFound>();
+            _passwordHasherMock.Verify(
+                x => x.Verify(
+                    It.IsAny<string>(),
+                    It.IsAny<string>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        public async Task AddAddressAsync_ShouldAddAddressSuccessfully()
+        {
+            var user = new User
+            {
+                Id = 8,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhya@gmail.com"
+            };
+
+            var request = new AddressRequest
+            {
+                HouseNumber = "123",
+                StreetAddress = "MG Road",
+                City = "Pune",
+                State = "Maharashtra",
+                PinCode = "411001",
+                Country = "India",
+                AddressType = (int)AddressType.Home
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync(user);
+            _userRepositoryMock
+                .Setup(x => x.AddAddress(It.IsAny<Address>()))
+                .Callback<Address>(address =>
+                {
+                    address.Id = 100;
+                });
+
+            var result = await _authService.AddAddressAsync(8, request);
+            result.Should().NotBeNull();
+            result.Id.Should().Be(100);
+            result.HouseNumber.Should().Be("123");
+            result.StreetAddress.Should().Be("MG Road");
+            result.City.Should().Be("Pune");
+            result.State.Should().Be("Maharashtra");
+            result.PinCode.Should().Be("411001");
+            result.Country.Should().Be("India");
+
+            _userRepositoryMock.Verify(
+                x => x.AddAddress(It.Is<Address>(a =>
+                    a.HouseNumber == "123" &&
+                    a.StreetAddress == "MG Road" &&
+                    a.City == "Pune" &&
+                    a.State == "Maharashtra" &&
+                    a.PinCode == "411001" &&
+                    a.Country == "India")),
+                Times.Once);
+
+            _userRepositoryMock.Verify(
+                x => x.AddUserAddress(It.Is<UserAddress>(ua =>
+                    ua.UserId == 8 &&
+                    ua.AddressId == 100)),
+                Times.Once);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Exactly(2));
+        }
+
+        [TestMethod]
+        public async Task AddAddressAsync_ShouldThrowUserNotFound_WhenUserDoesNotExist()
+        {
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(8))
+                .ReturnsAsync((User)null);
+
+            var request = new AddressRequest
+            {
+                HouseNumber = "123",
+                StreetAddress = "MG Road",
+                City = "Pune",
+                State = "Maharashtra",
+                PinCode = "411001",
+                Country = "India",
+                AddressType = (int)AddressType.Home
+            };
+
+            Func<Task> act = async () => await _authService.AddAddressAsync(8, request);
+            await act.Should().ThrowAsync<UserNotFound>();
+            _userRepositoryMock.Verify(
+                x => x.AddAddress(It.IsAny<Address>()),
+                Times.Never);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        public async Task AddAddressAsync_ShouldThrowArgumentNullException_WhenRequestIsNull()
+        {
+            Func<Task> act = async () => await _authService.AddAddressAsync(8, null);
+            await act.Should().ThrowAsync<ArgumentNullException>();
+
+            _userRepositoryMock.Verify(
+                x => x.GetByIdAsync(It.IsAny<int>()),
+                Times.Never);
+        }
     }
-}
+ }

@@ -131,9 +131,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
-    <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Data\RestaurantDbContext.cs" />
-    <Compile Include="Filters\ExceptionFilter.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -145,9 +143,11 @@
     <Compile Include="Migrations\202608031038533_UpdateEntityValidationAndModel.Designer.cs">
       <DependentUpon>202608031038533_UpdateEntityValidationAndModel.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202609051256405_ChangedOrderItemDatatype.cs" />
+    <Compile Include="Migrations\202609051256405_ChangedOrderItemDatatype.Designer.cs">
+      <DependentUpon>202609051256405_ChangedOrderItemDatatype.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Models\DTO\LoginRequest.cs" />
-    <Compile Include="Models\DTO\RegisterRequest.cs" />
     <Compile Include="Models\Entities\Address.cs" />
     <Compile Include="Models\Entities\MenuItem.cs" />
     <Compile Include="Models\Entities\Order.cs" />
@@ -161,10 +161,6 @@
     <Compile Include="Models\Enums\OrderStatus.cs" />
     <Compile Include="Models\Enums\UserRole.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Repositories\Implementations\UserRepositories.cs" />
-    <Compile Include="Repositories\Interfaces\IUSerRepositories.cs" />
-    <Compile Include="Services\Implementations\AuthService.cs" />
-    <Compile Include="Services\Interfaces\IAuthService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="favicon.ico" />
@@ -184,9 +180,11 @@
     <EmbeddedResource Include="Migrations\202608031038533_UpdateEntityValidationAndModel.resx">
       <DependentUpon>202608031038533_UpdateEntityValidationAndModel.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202609051256405_ChangedOrderItemDatatype.resx">
+      <DependentUpon>202609051256405_ChangedOrderItemDatatype.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="libman.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <PropertyGroup>

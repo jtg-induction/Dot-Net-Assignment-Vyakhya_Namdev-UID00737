@@ -16,7 +16,7 @@ namespace DotNetRestaurantManagement.Models.Entities
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; }
 
-        [Range(1, int.MaxValue)]
+        [Range(typeof(decimal), "50", "10000000")]
         public decimal Price { get; set; }
         public virtual MenuItem MenuItem { get; set; }
         public virtual Order Order { get; set; }

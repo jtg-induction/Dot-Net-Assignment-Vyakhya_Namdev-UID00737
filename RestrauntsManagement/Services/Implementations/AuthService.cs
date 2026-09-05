@@ -85,6 +85,11 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
             bool isValid = _passwordHasher.Verify(request.Password, user.Password);
             if (!isValid) throw new InvalidCredentialsException();
+            // Reactivate account when user logs in again
+            if (!user.IsActive){
+                user.IsActive = true;
+                await _userRepository.SaveChanges();
+            }
             string accessToken = _jwtService.GenerateAccessToken(user);
             string refreshToken = _jwtService.GenerateRefreshToken();
 
@@ -274,6 +279,17 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 Country = address.Country,
                 AddressType = (int)address.AddressType
             };
+        }
+
+        public async Task DeactivateAccountAsync(int userId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || !user.IsActive) throw new UserNotFound();
+            user.IsActive = false;
+
+            // Invalidate all existing JWT access tokens
+            user.TokenVersion++;
+            await _userRepository.SaveChanges();
         }
     }
 }

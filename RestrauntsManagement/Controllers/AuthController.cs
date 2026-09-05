@@ -187,5 +187,42 @@ namespace DotNetRestaurantManagement.Controllers
             var response = await _authService.AddAddressAsync(userId, request);
             return Content(HttpStatusCode.Created,response);
         }
+
+        [JwtAuthorize]
+        [HttpPut]
+        [Route("deactivate")]
+        public async Task<IHttpActionResult> DeactivateAccount(){
+            try{
+                int userId = GetUserIdFromClaims();
+                await _authService.DeactivateAccountAsync(userId);
+                DeleteCookie("AccessToken");
+                DeleteCookie("RefreshToken");
+                return Ok(new
+                {
+                    Message = "Account deactivated successfully!"
+                });
+            }
+            catch (UserNotFound ex)
+            {
+                return Content(HttpStatusCode.BadRequest, new ErrorResponse
+                    {
+                        Message = ex.Message
+                    });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Content(HttpStatusCode.BadRequest, new ErrorResponse
+                {
+                    Message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return Content(HttpStatusCode.BadRequest, new ErrorResponse
+                {
+                    Message = ex.Message
+                });
+            }
+        }
     }
 }

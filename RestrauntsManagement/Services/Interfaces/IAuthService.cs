@@ -12,5 +12,6 @@ namespace DotNetRestaurantManagement.Services.Interfaces
         Task<UpdateProfileResponse> UpdateProfileAsync(int userId,UpdateProfileRequest request);
         Task ChangePasswordAsync(int userId, ChangePasswordRequest request);
         Task<AddressResponse> AddAddressAsync(int userId, AddressRequest request);
+        Task DeactivateAccountAsync(int userId);
     }
 }

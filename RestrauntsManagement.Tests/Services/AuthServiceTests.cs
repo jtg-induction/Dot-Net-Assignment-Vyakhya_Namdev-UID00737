@@ -67,6 +67,19 @@ namespace DotNetRestaurantManagement.Tests.Services
             };
         }
 
+        private User CreateInactiveUser()
+        {
+            return new User
+            {
+                Id = 1,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhyanamdev@test.com",
+                Password = "hashed-password",
+                IsActive = false,
+                TokenVersion = 2
+            };
+        }
+
         private RefreshToken CreateValidRefreshToken(User user)
         {
             return new RefreshToken
@@ -1012,6 +1025,237 @@ namespace DotNetRestaurantManagement.Tests.Services
             _userRepositoryMock.Verify(
                 x => x.GetByIdAsync(It.IsAny<int>()),
                 Times.Never);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccountAsync_ValidUser_DeactivatesAccount()
+        {
+            var user = CreateActiveUser();
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)user.Id))
+                .ReturnsAsync(user);
+
+            await _authService.DeactivateAccountAsync((int)user.Id);
+            user.IsActive.Should().BeFalse();
+            _userRepositoryMock.Verify(x => x.GetByIdAsync((int)user.Id), Times.Once);
+            _userRepositoryMock.Verify(x => x.SaveChanges(), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccountAsync_ValidUser_IncrementsTokenVersion()
+        {
+            var user = CreateActiveUser();
+            long oldTokenVersion = user.TokenVersion;
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)user.Id))
+                .ReturnsAsync(user);
+            await _authService.DeactivateAccountAsync((int)user.Id);
+            user.TokenVersion.Should().Be(oldTokenVersion + 1);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccountAsync_ValidUser_SavesChanges()
+        {
+            var user = CreateActiveUser();
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)user.Id))
+                .ReturnsAsync(user);
+            await _authService.DeactivateAccountAsync((int)user.Id);
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccountAsync_UserDoesNotExist_ThrowsUserNotFound()
+        {
+            int userId = 999;
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(userId))
+                .ReturnsAsync((User)null);
+            Func<Task> act = () => _authService.DeactivateAccountAsync(userId);
+            await act.Should().ThrowAsync<UserNotFound>();
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccountAsync_SaveChangesFails_PropagatesException()
+        {
+            var user = CreateActiveUser();
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)user.Id))
+                .ReturnsAsync(user);
+            _userRepositoryMock
+               .Setup(x => x.SaveChanges())
+               .ThrowsAsync(new Exception("Database error"));
+
+            Func<Task> act = () => _authService.DeactivateAccountAsync((int)user.Id);
+            await act.Should()
+                .ThrowAsync<Exception>()
+                .WithMessage("Database error");
+            user.IsActive.Should().BeFalse();
+            user.TokenVersion.Should().Be(2);
+        }
+
+        [TestMethod]
+        public async Task LoginAsync_InactiveUser_WithValidCredentials_ReactivatesAccount()
+        {
+            var user = CreateInactiveUser();
+            var request = new LoginRequest
+            {
+                Email = user.Email,
+                Password = "correct-password"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByEmailAsync(user.Email))
+                .ReturnsAsync(user);
+
+            _passwordHasherMock
+                .Setup(x => x.Verify(
+                    request.Password,
+                    user.Password))
+                .Returns(true);
+
+            _jwtServiceMock
+                .Setup(x => x.GenerateAccessToken(user))
+                .Returns("new-access-token");
+
+            _jwtServiceMock
+                .Setup(x => x.GenerateRefreshToken())
+                .Returns("new-refresh-token");
+            var result = await _authService.LoginAsync(request);
+            result.Should().NotBeNull();
+            user.IsActive.Should().BeTrue();
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task LoginAsync_InactiveUser_WithValidCredentials_GeneratesNewTokens()
+        {
+            var user = CreateInactiveUser();
+            var request = new LoginRequest
+            {
+                Email = user.Email,
+                Password = "correct-password"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByEmailAsync(user.Email))
+                .ReturnsAsync(user);
+            _passwordHasherMock
+                .Setup(x => x.Verify(
+                    request.Password,
+                    user.Password))
+                .Returns(true);
+
+            _jwtServiceMock
+                .Setup(x => x.GenerateAccessToken(user))
+                .Returns("new-access-token");
+
+            _jwtServiceMock
+                .Setup(x => x.GenerateRefreshToken())
+                .Returns("new-refresh-token");
+
+            var result = await _authService.LoginAsync(request);
+            result.AccessToken.Should().Be("new-access-token");
+            result.RefreshToken.Should().Be("new-refresh-token");
+
+            _jwtServiceMock.Verify(
+                x => x.GenerateAccessToken(user),
+                Times.Once);
+
+            _jwtServiceMock.Verify(
+                x => x.GenerateRefreshToken(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task LoginAsync_InactiveUser_WithWrongPassword_DoesNotReactivateAccount()
+        {
+            var user = CreateInactiveUser();
+            var request = new LoginRequest
+            {
+                Email = user.Email,
+                Password = "wrong-password"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByEmailAsync(user.Email))
+                .ReturnsAsync(user);
+
+            _passwordHasherMock
+                .Setup(x => x.Verify(
+                    request.Password,
+                    user.Password))
+                .Returns(false);
+
+            Func<Task> act = () => _authService.LoginAsync(request);
+            await act.Should().ThrowAsync<InvalidCredentialsException>();
+            user.IsActive.Should().BeFalse();
+            _userRepositoryMock.Verify(
+                x => x.SaveChanges(),
+                Times.Never);
+            _jwtServiceMock.Verify(
+               x => x.GenerateAccessToken(It.IsAny<User>()),
+               Times.Never);
+        }
+
+        [TestMethod]
+        public async Task RefreshTokenAsync_InactiveUser_RejectsRefreshToken()
+        {
+            var user = CreateInactiveUser();
+            var refreshToken = new RefreshToken
+            {
+                Token = "old-refresh-token",
+                UserId = user.Id,
+                User = user,
+                IsRevoked = false,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByTokenAsync(refreshToken.Token))
+                .ReturnsAsync(refreshToken);
+
+            Func<Task> act = () => _authService.RefreshTokenAsync(refreshToken.Token);
+            await act.Should().ThrowAsync<UserInactiveException>();
+            _jwtServiceMock.Verify(
+                x => x.GenerateAccessToken(It.IsAny<User>()),
+                Times.Never);
+
+            _jwtServiceMock.Verify(
+               x => x.GenerateRefreshToken(),
+               Times.Never);
+        }
+
+        [TestMethod]
+        public async Task LogoutAsync_ValidRefreshToken_IncrementsTokenVersion()
+        {
+            var user = CreateActiveUser();
+            var refreshToken = new RefreshToken
+            {
+                Token = "refresh-token",
+                UserId = user.Id,
+                User = user,
+                IsRevoked = false,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            };
+
+            long oldTokenVersion = user.TokenVersion;
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByTokenAsync(refreshToken.Token))
+                .ReturnsAsync(refreshToken);
+            await _authService.LogoutAsync(refreshToken.Token);
+            user.TokenVersion.Should().Be(oldTokenVersion + 1);
+            refreshToken.IsRevoked.Should().BeTrue();
+            _refreshTokenRepositoryMock.Verify(
+                x => x.UpdateAsync(refreshToken),
+                Times.Once);
         }
     }
  }

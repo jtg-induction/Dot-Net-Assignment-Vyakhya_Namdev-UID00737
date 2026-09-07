@@ -1,5 +1,6 @@
 using DotNetRestaurantManagement.Data;
 using DotNetRestaurantManagement.Repositories;
+using DotNetRestaurantManagement.Repositories.Implementations;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Implementations;
 using DotNetRestaurantManagement.Services.Interfaces;
@@ -28,6 +29,10 @@ namespace DotNetRestaurantManagement
             container.RegisterType<IUserService, UserService>();
             // Registers IRefreshTokenRepository with its concrete implementation.
             container.RegisterType<IRefreshTokenRepository, RefreshTokenRepository>();
+            // Registers RestaurantService
+            container.RegisterType<IRestaurantService, RestaurantService>(new HierarchicalLifetimeManager());
+            // Registers Restaurants Repostiories
+            container.RegisterType<IRestaurantRepository, RestaurantRepository>(new HierarchicalLifetimeManager());
             // Sets Unity as the dependency resolver for Web API.
             GlobalConfiguration.Configuration.DependencyResolver = new UnityDependencyResolver(container);
         }

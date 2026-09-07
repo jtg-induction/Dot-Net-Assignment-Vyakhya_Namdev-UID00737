@@ -33,7 +33,7 @@ namespace DotNetRestaurantManagement.Controllers
         [Route("signup")]
         public async Task<IHttpActionResult> Signup(SignupRequest request){
             SignupResponse response = await _authService.Signup(request);
-            return Content(HttpStatusCode.Created, response);
+            return Ok(new ApiResponse<SignupResponse>(true, response));
         }
 
         /// <summary>
@@ -46,13 +46,7 @@ namespace DotNetRestaurantManagement.Controllers
         public async Task<IHttpActionResult> Login(LoginRequest request)
         {
             var response = await _authService.LoginAsync(request);
-            return Ok(new
-            {
-                response.Name,
-                response.Email,
-                response.AccessToken,
-                response.RefreshToken
-            });
+            return Ok(new ApiResponse<LoginResponse>(true,response));
         }
 
         /// Generates new access and refresh tokens using the refresh token cookie.
@@ -67,11 +61,7 @@ namespace DotNetRestaurantManagement.Controllers
             }
 
             var response = await _authService.RefreshTokenAsync(request.RefreshToken);
-            return Ok(new
-            {
-                response.AccessToken,
-                response.RefreshToken
-            });
+            return Ok(new ApiResponse<RefreshTokenResponse>(true,response));
         }
 
         /// Logs out the current user and removes the authentication cookies.
@@ -85,143 +75,7 @@ namespace DotNetRestaurantManagement.Controllers
             var refreshTokenId = ClaimsHelper.GetRefreshTokenId(User);
             await _authService.LogoutAsync(userId, refreshTokenId);
 
-            return Ok(new
-            {
-                Message = StringConstants.LogoutSuccessMessage
-            });
-        }
-
-        private int GetUserIdFromClaims()
-        {
-            var claimsIdentity = User.Identity as ClaimsIdentity;
-
-            var userIdClaim =
-                claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)
-                ?? claimsIdentity?.FindFirst(JwtRegisteredClaimNames.Sub);
-
-            if (userIdClaim == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            if (!int.TryParse(userIdClaim.Value, out int userId))
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            return userId;
-        }
-
-        [JwtAuthorize]
-        [HttpPut]
-        [Route("update-profile")]
-        public async Task<IHttpActionResult> UpdateProfile(UpdateProfileRequest request)
-        {
-            if (request == null) return BadRequest("Request body is required!");
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                int userId = GetUserIdFromClaims();
-                var response = await _authService.UpdateProfileAsync(userId,request);
-                return Ok(new
-                {
-                    response.Id,
-                    response.Name,
-                    response.Email,
-                    response.PhoneNumber,
-                    Message = "Profile updated successfully!"
-                });
-            }
-            catch (DuplicateEmailException ex)
-            {
-                return Content(HttpStatusCode.Conflict, new ErrorResponse { Message = ex.Message });
-            }
-            catch (DuplicatePhoneNumberException ex)
-            {
-                return Content(HttpStatusCode.Conflict, new ErrorResponse { Message = ex.Message });
-            }
-            catch (PhoneNumberAlreadyRegistered ex)
-            {
-                return Content(HttpStatusCode.Conflict, new ErrorResponse { Message = ex.Message });
-            }
-            catch (UserNotFound)
-            {
-                return NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
-            }
-            catch (Exception)
-            {
-                return InternalServerError();
-            }
-        }
-
-        [JwtAuthorize]
-        [HttpPut]
-        [Route("update-password")]
-        public async Task<IHttpActionResult> ChangePassword(ChangePasswordRequest request)
-        {
-            if (request == null) return BadRequest("Request body is required!");
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                int userId = GetUserIdFromClaims();
-                await _authService.ChangePasswordAsync(userId, request);
-                return Ok(new
-                {
-                    Message = "Password updated successfully!"
-                });
-            }
-            catch (InvalidCredentialsException)
-            {
-                return Content(
-                    HttpStatusCode.Unauthorized,
-                    new
-                    {
-                        Message = "Current password is incorrect!"
-                    });
-            }
-            catch (UserNotFound)
-            {
-                return NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
-            }
-            catch (Exception)
-            {
-                return InternalServerError();
-            }
-        }
-
-        [JwtAuthorize]
-        [HttpPost]
-        [Route("update-address")]
-        public async Task<IHttpActionResult> AddAddress(AddressRequest request)
-        {
-            if (request == null) return BadRequest("Request body is required!");
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                int userId = GetUserIdFromClaims();
-                var response = await _authService.AddAddressAsync(userId, request);
-                return Content(HttpStatusCode.Created,response);
-            }
-            catch (UserNotFound)
-            {
-                return NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
-            }
-            catch (Exception)
-            {
-                return InternalServerError();
-            }
+            return Ok(true);
         }
     }
 }

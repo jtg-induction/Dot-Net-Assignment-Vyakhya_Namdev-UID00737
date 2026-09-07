@@ -9,6 +9,5 @@
         public const string UserId = "userId";
         public const string RefreshTokenId = "refreshTokenId";
         public const string userRole = "role";
-        public const string LogoutSuccessMessage = "Logged out successfully!";
     }
 }

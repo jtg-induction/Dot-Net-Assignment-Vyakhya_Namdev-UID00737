@@ -36,44 +36,32 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
-        public async Task<bool> EmailExistsForOtherUserAsync(string email, int userId){
-            return await _context.Users
-                .AnyAsync(user =>
-                    user.Email == email &&
-                    user.Id != userId);
         }
-        public async Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, int userId){
+        public async Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, long userId){
             return await _context.Users
                 .AnyAsync(user =>
                     user.PhoneNumber == phoneNumber &&
                     user.Id != userId);
         }
 
-        public async Task<Address> GetUserAddressAsync(int userId){
+        public async Task<UserAddress> GetUserAddressAsync(long userId){
             return await _context.UserAddresses
-                .Where(ua => ua.UserId == userId)
-                .Select(ua => ua.Address)
-                .FirstOrDefaultAsync();
+                .Include(ua => ua.Address)
+                .FirstOrDefaultAsync(ua =>
+                    ua.UserId == userId &&
+                    ua.IsActive);
         }
-
-        public async Task UpdateProfileAsync(int userId,
-            string name,
-            string email,
-            string phoneNumber)
+        public async Task AddUserAddressAsync(Address address, UserAddress userAddress)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null) return;
-            user.Name = name;
-            user.Email = email;
-            user.PhoneNumber = phoneNumber;
-            user.UpdatedAt = DateTime.UtcNow;
-        }
-        public void AddAddress(Address address){
             _context.Addresses.Add(address);
+            userAddress.Address = address;
+            _context.UserAddresses.Add(userAddress);
+            await _context.SaveChangesAsync();
         }
 
-        public void AddUserAddress(UserAddress userAddress){
-            _context.UserAddresses.Add(userAddress);
+        public async Task<User> GetByIdAsync(long userId)
+        {
+            return await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
         }
     }
 }

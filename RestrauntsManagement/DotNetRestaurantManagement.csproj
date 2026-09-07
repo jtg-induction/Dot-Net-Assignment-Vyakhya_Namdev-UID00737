@@ -219,9 +219,9 @@
     <Compile Include="Constants\RegexConstants.cs" />
     <Compile Include="Constants\StringConstants.cs" />
     <Compile Include="Constants\ValidationConstants.cs" />
+    <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Data\RestaurantDbContext.cs" />
     <Compile Include="Exceptions\ApiException.cs" />
-    <Compile Include="Exceptions\ErrorResponseResult.cs" />
     <Compile Include="Exceptions\GlobalExceptionHandler.cs" />
     <Compile Include="Filters\ValidateModelStateAttribute.cs" />
     <Compile Include="Global.asax.cs">
@@ -240,9 +240,9 @@
       <DependentUpon>202609101146127_RefreshTableAdded.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Models\DTO\AddressRequest.cs" />
     <Compile Include="Models\DTO\AddressResponse.cs" />
+    <Compile Include="Models\DTO\ApiResponse.cs" />
     <Compile Include="Models\DTO\ChangePasswordRequest.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
     <Compile Include="Models\DTO\RefreshTokenRequest.cs" />
@@ -268,6 +268,7 @@
     <Compile Include="Repositories\Interfaces\IUserRepository.cs" />
     <Compile Include="Repositories\Implementations\UserRepository.cs" />
     <Compile Include="Services\Implementations\AuthService.cs" />
+    <Compile Include="Services\Implementations\UserService.cs" />
     <Compile Include="Services\Interfaces\IAuthService.cs" />
     <Compile Include="Filters\JwtAuthorizeAttribute.cs" />
     <Compile Include="Models\DTO\LoginResponse.cs" />
@@ -275,6 +276,7 @@
     <Compile Include="Models\Entities\RefreshToken.cs" />
     <Compile Include="Repositories\Interfaces\IRefreshTokenRepository.cs" />
     <Compile Include="Repositories\Implementations\RefreshTokenRepository.cs" />
+    <Compile Include="Services\Interfaces\IUserService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="favicon.ico" />

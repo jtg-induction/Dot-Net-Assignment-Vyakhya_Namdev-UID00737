@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DotNetRestaurantManagement.Constants;
+using System.ComponentModel.DataAnnotations;
 namespace DotNetRestaurantManagement.Models.DTO
 {
     public class ChangePasswordRequest
@@ -7,7 +8,7 @@ namespace DotNetRestaurantManagement.Models.DTO
         public string CurrentPassword { get; set; }
 
         [Required]
-        [StringLength(100, MinimumLength = 8)]
+        [StringLength(ValidationConstants.MaximumPasswordLength, MinimumLength = ValidationConstants.MinimumPasswordLength)]
         public string NewPassword { get; set; }
     }
 }

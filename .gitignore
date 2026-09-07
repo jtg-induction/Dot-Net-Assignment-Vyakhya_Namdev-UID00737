@@ -16,5 +16,7 @@ packages/
 *.user
 *.suo
 connectionStrings.config
-RestaurantDataSeeder
 secrets.config
+
+#Removing the data seeder project folder
+DataSeeder/

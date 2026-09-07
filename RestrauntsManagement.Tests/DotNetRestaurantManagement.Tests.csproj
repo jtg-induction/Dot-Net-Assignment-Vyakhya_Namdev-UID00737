@@ -213,12 +213,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controllers\AuthControllerTests.cs" />
+    <Compile Include="Controllers\RestaurantControllerTests.cs" />
+    <Compile Include="Helpers\PaginationHelperTests.cs" />
+    <Compile Include="Helpers\TestAsyncEnumerable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\RefreshTokenRepositoryTests.cs" />
+    <Compile Include="Repository\RestaurantRepositoryTests.cs" />
     <Compile Include="Repository\UserRepositoryTests.cs" />
     <Compile Include="Services\AuthServiceTests.cs" />
     <Compile Include="Services\JwtServiceTests.cs" />
     <Compile Include="Services\PasswordHashTests.cs" />
+    <Compile Include="Services\RestaurantServiceTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.config" />

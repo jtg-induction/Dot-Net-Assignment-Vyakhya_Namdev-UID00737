@@ -7,13 +7,13 @@ namespace DotNetRestaurantManagement.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.5.2")]
-    public sealed partial class AddRefreshTokenTable : IMigrationMetadata
+    public sealed partial class AddRefreshTable : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(AddRefreshTokenTable));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(AddRefreshTable));
         
         string IMigrationMetadata.Id
         {
-            get { return "202608061427278_AddRefreshTokenTable"; }
+            get { return "202609140446594_AddRefreshTable"; }
         }
         
         string IMigrationMetadata.Source

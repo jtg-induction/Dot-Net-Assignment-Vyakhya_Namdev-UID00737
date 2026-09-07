@@ -1,9 +1,9 @@
-﻿using DotNetRestaurantManagement.Data;
+﻿using DotNetRestaurantManagement.Constants;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Web;
@@ -14,43 +14,49 @@ namespace DotNetRestaurantManagement.Filters
 {
     public class JwtAuthorizeAttribute : AuthorizeAttribute
     {
-        private readonly RestaurantDbContext _context;
-        public JwtAuthorizeAttribute()
-        {
-            _context = new RestaurantDbContext();
-        }
-
         protected override bool IsAuthorized(HttpActionContext actionContext)
         {
             try
             {
-                var cookie = HttpContext.Current.Request.Cookies["AccessToken"];
-                if (cookie == null) return false;
-                string token = cookie.Value;
+                var authHeader = HttpContext.Current.Request.Headers[StringConstants.Authorization];
+
+                if (string.IsNullOrWhiteSpace(authHeader) ||
+                    !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    return false;
+                }
+
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(ConfigurationManager.AppSettings["JwtSecret"]);
+                var key = Encoding.UTF8.GetBytes(
+                    ConfigurationManager.AppSettings[StringConstants.SecretJwt]);
+
                 SecurityToken validatedToken;
+
                 var userInfo = tokenHandler.ValidateToken(
                     token,
                     new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(key),
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.Zero,
+                        ValidateIssuer = true,
+                        ValidIssuer = ConfigurationManager.AppSettings["JwtIssuer"],
+                        ValidateAudience = true,
+                        ValidAudience = ConfigurationManager.AppSettings["JwtAudience"]
                     },
                     out validatedToken);
 
-                var userIdClaim = userInfo.FindFirst(JwtRegisteredClaimNames.Sub);
-                var tokenVersionClaim = userInfo.FindFirst("TokenVersion");
-                if (userIdClaim == null || tokenVersionClaim == null) return false;
-                long userId = Convert.ToInt64(userIdClaim.Value);
-                long tokenVersion = Convert.ToInt64(tokenVersionClaim.Value);
-                var user = _context.Users.FirstOrDefault(x => x.Id == userId);
-                if (user == null) return false;
-                if (!user.IsActive) return false;
-                if (user.TokenVersion != tokenVersion) return false;
                 HttpContext.Current.User = userInfo;
                 Thread.CurrentPrincipal = userInfo;
+
                 return true;
             }
             catch

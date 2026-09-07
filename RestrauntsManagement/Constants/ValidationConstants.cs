@@ -15,5 +15,7 @@
         public const decimal MaximumOrderAmount = 1000000;
         public const decimal MaximumOrderItemPrice = 10000000;
         public const decimal DefaultUserBalance = 1000;
+        public const int RefreshTokenLength = 88;
+        public const int RefreshTokenExpiryDays = 7;
     }
 }

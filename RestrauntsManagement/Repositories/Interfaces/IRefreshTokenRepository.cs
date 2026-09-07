@@ -5,9 +5,10 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
 { 
     public interface IRefreshTokenRepository
     {
-        Task AddAsync(RefreshToken refreshToken);
+        void Add(RefreshToken refreshToken);
+        Task<RefreshToken> GetByIdAsync(long id);
         Task<RefreshToken> GetByTokenAsync(string token);
-        Task UpdateAsync(RefreshToken refreshToken);
-        Task RevokeAsync(RefreshToken refreshToken);
+        void Delete(RefreshToken refreshToken);
+        Task SaveChangesAsync();
     }
 }

@@ -197,38 +197,35 @@
   <ItemGroup>
     <Compile Include="App_Start\UnityConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Constants\StringConstants.cs" />
     <Compile Include="Constants\ErrorMessages.cs" />
     <Compile Include="Constants\IndexConstants.cs" />
     <Compile Include="Constants\RegexConstants.cs" />
     <Compile Include="Constants\StringConstants.cs" />
     <Compile Include="Constants\ValidationConstants.cs" />
-    <Compile Include="Constants\IndexConstants.cs" />
     <Compile Include="Data\RestaurantDbContext.cs" />
     <Compile Include="Exceptions\ApiException.cs" />
     <Compile Include="Exceptions\ErrorResponseResult.cs" />
     <Compile Include="Exceptions\GlobalExceptionHandler.cs" />
     <Compile Include="Filters\ValidateModelStateAttribute.cs" />
-    <Compile Include="Exceptions\InvalidCredentialsException.cs" />
-    <Compile Include="Exceptions\InvalidRefreshTokenException.cs" />
-    <Compile Include="Exceptions\UserInactiveException.cs" />
-    <Compile Include="Exceptions\ValidEmailException.cs" />
-    <Compile Include="Exceptions\ValidPasswordException.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Helpers\PasswordHashingHelper.cs" />
+    <Compile Include="Helpers\ClaimsHelper.cs" />
+    <Compile Include="Helpers\TokenHelper.cs" />
     <Compile Include="Migrations\202609100934268_InitialDatabaseSetup.cs" />
     <Compile Include="Migrations\202609100934268_InitialDatabaseSetup.Designer.cs">
       <DependentUpon>202609100934268_InitialDatabaseSetup.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202608061427278_AddRefreshTokenTable.cs" />
-    <Compile Include="Migrations\202608061427278_AddRefreshTokenTable.Designer.cs">
-      <DependentUpon>202608061427278_AddRefreshTokenTable.cs</DependentUpon>
+    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Migrations\202609101146127_RefreshTableAdded.cs" />
+    <Compile Include="Migrations\202609101146127_RefreshTableAdded.Designer.cs">
+      <DependentUpon>202609101146127_RefreshTableAdded.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
+    <Compile Include="Models\DTO\RefreshTokenRequest.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />
     <Compile Include="Models\DTO\SignupResponse.cs" />
     <Compile Include="Models\DTO\LoginRequest.cs" />
@@ -256,8 +253,6 @@
     <Compile Include="Models\Entities\RefreshToken.cs" />
     <Compile Include="Repositories\Interfaces\IRefreshTokenRepository.cs" />
     <Compile Include="Repositories\Implementations\RefreshTokenRepository.cs" />
-    <Compile Include="Services\Interfaces\IJwtService.cs" />
-    <Compile Include="Services\Implementations\JwtService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="favicon.ico" />
@@ -273,10 +268,14 @@
   <ItemGroup>
     <Content Include="connectionStrings.config" />
     <None Include="packages.config" />
+    <Content Include="secrets.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Migrations\202609100934268_InitialDatabaseSetup.resx">
       <DependentUpon>202609100934268_InitialDatabaseSetup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202609101146127_RefreshTableAdded.resx">
+      <DependentUpon>202609101146127_RefreshTableAdded.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

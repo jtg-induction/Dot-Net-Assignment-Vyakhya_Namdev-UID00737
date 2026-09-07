@@ -39,273 +39,167 @@ namespace DotNetRestaurantManagement.Tests.Repositories
         {
             return new RefreshToken
             {
-                Token = "refresh-token-123",
                 UserId = userId,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                IsRevoked = false
+                Token = "refresh-token-hash"
             };
         }
 
         [TestMethod]
+        [Description("Verifies that a valid refresh token is successfully added to the database.")]
         public async Task AddAsync_WhenRefreshTokenIsValid_ShouldInsertToken()
         {
             User user = CreateUser();
-
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-
             RefreshToken refreshToken = CreateRefreshToken(user.Id);
-
-            await _repository.AddAsync(refreshToken);
+            await _repository.Add(refreshToken);
+            await _repository.SaveChangesAsync();
             _context.RefreshTokens.Count().Should().Be(1);
-            _context.RefreshTokens.First().Token.Should().Be("refresh-token-123");
-            _context.RefreshTokens.First().UserId.Should().Be(user.Id);
+            RefreshToken result = _context.RefreshTokens.First();
+            result.Id.Should().BeGreaterThan(0);
+            result.UserId.Should().Be(user.Id);
+            result.Token.Should().Be("refresh-token-hash");
         }
 
         [TestMethod]
+        [Description("Verifies that GetByTokenAsync returns the refresh token when the token hash exists.")]
         public async Task GetByTokenAsync_WhenTokenExists_ShouldReturnToken()
         {
             User user = CreateUser();
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
 
+            RefreshToken refreshToken = CreateRefreshToken(user.Id);
             _context.RefreshTokens.Add(refreshToken);
             await _context.SaveChangesAsync();
 
-            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-123");
+            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-hash");
 
             result.Should().NotBeNull();
-            result.Token.Should().Be("refresh-token-123");
+            result.Token.Should().Be("refresh-token-hash");
             result.UserId.Should().Be(user.Id);
         }
 
         [TestMethod]
+        [Description("Verifies that GetByTokenAsync includes the user associated with the refresh token.")]
+        public async Task GetByTokenAsync_WhenTokenExists_ShouldReturnAssociatedUser()
+        {
+            User user = CreateUser();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            RefreshToken refreshToken = CreateRefreshToken(user.Id);
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
+            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-hash");
+
+            result.Should().NotBeNull();
+            result.User.Should().NotBeNull();
+            result.User.Id.Should().Be(user.Id);
+            result.User.Email.Should().Be("vyakhya@test.com");
+        }
+
+        [TestMethod]
+        [Description("Verifies that GetByTokenAsync returns null when the token hash does not exist.")]
         public async Task GetByTokenAsync_WhenTokenDoesNotExist_ShouldReturnNull()
         {
-            RefreshToken result = await _repository.GetByTokenAsync("invalid-token");
+            RefreshToken result = await _repository.GetByTokenAsync("invalid-token-hash");
             result.Should().BeNull();
         }
 
         [TestMethod]
+        [Description("Verifies that GetByTokenAsync returns the correct refresh token when multiple tokens exist.")]
         public async Task GetByTokenAsync_WithMultipleTokens_ShouldReturnCorrectToken()
         {
-            User user1 = CreateUser();
-
-            User user2 = new User
-            {
-                Name = "Rahul",
-                Email = "rahul@test.com",
-                Password = "HASH",
-                PhoneNumber = "9999999999"
-            };
-
-            _context.Users.Add(user1);
-            _context.Users.Add(user2);
-
-            await _context.SaveChangesAsync();
-
-            RefreshToken token1 = CreateRefreshToken(user1.Id);
-            token1.Token = "token-1";
-
-            RefreshToken token2 = CreateRefreshToken(user2.Id);
-            token2.Token = "token-2";
-
-            _context.RefreshTokens.Add(token1);
-            _context.RefreshTokens.Add(token2);
-
-            await _context.SaveChangesAsync();
-
-            RefreshToken result = await _repository.GetByTokenAsync("token-2");
-            result.Should().NotBeNull();
-            result.Token.Should().Be("token-2");
-            result.UserId.Should().Be(user2.Id);
-        }
-
-        [TestMethod]
-        public async Task GetByTokenAsync_WhenTokenIsRevoked_ShouldReturnRevokedToken()
-        {
             User user = CreateUser();
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
-            refreshToken.IsRevoked = true;
-            refreshToken.RevokedAt = DateTime.UtcNow;
-
-            _context.RefreshTokens.Add(refreshToken);
-            await _context.SaveChangesAsync();
-
-            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-123");
-            result.Should().NotBeNull();
-            result.IsRevoked.Should().BeTrue();
-            result.RevokedAt.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public async Task GetByTokenAsync_WhenTokenIsExpired_ShouldReturnToken()
-        {
-            User user = CreateUser();
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
-            refreshToken.ExpiresAt = DateTime.UtcNow.AddMinutes(-10);
-            _context.RefreshTokens.Add(refreshToken);
-            await _context.SaveChangesAsync();
-
-            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-123");
-            result.Should().NotBeNull();
-            result.ExpiresAt.Should().BeBefore(DateTime.UtcNow);
-        }
-
-        [TestMethod]
-        public async Task AddMultipleTokens_ShouldSaveAllTokens()
-        {
-            User user = CreateUser();
-
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
             RefreshToken token1 = CreateRefreshToken(user.Id);
-            token1.Token = "token-1";
+            token1.Token = "token-hash-1";
 
             RefreshToken token2 = CreateRefreshToken(user.Id);
-            token2.Token = "token-2";
+            token2.Token = "token-hash-2";
 
-            await _repository.AddAsync(token1);
-            await _repository.AddAsync(token2);
+            _context.RefreshTokens.Add(token1);
+            _context.RefreshTokens.Add(token2);
+            await _context.SaveChangesAsync();
+
+            RefreshToken result = await _repository.GetByTokenAsync("token-hash-2");
+            result.Should().NotBeNull();
+            result.Token.Should().Be("token-hash-2");
+            result.UserId.Should().Be(user.Id);
+        }
+
+        [TestMethod]
+        [Description("Verifies that GetByIdAsync returns the refresh token when the ID exists.")]
+        public async Task GetByIdAsync_WhenIdExists_ShouldReturnToken()
+        {
+            User user = CreateUser();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            RefreshToken refreshToken = CreateRefreshToken(user.Id);
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
+            RefreshToken result = await _repository.GetByIdAsync(refreshToken.Id);
+
+            result.Should().NotBeNull();
+            result.Id.Should().Be(refreshToken.Id);
+            result.UserId.Should().Be(user.Id);
+            result.Token.Should().Be("refresh-token-hash");
+        }
+
+        [TestMethod]
+        [Description("Verifies that GetByIdAsync returns null when the refresh token ID does not exist.")]
+        public async Task GetByIdAsync_WhenIdDoesNotExist_ShouldReturnNull()
+        {
+            RefreshToken result = await _repository.GetByIdAsync(999999);
+
+            result.Should().BeNull();
+        }
+
+        [TestMethod]
+        [Description("Verifies that multiple refresh tokens can be added for the same user.")]
+        public async Task AddMultipleTokens_ShouldSaveAllTokens()
+        {
+            User user = CreateUser();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            RefreshToken token1 = CreateRefreshToken(user.Id);
+            token1.Token = "token-hash-1";
+
+            RefreshToken token2 = CreateRefreshToken(user.Id);
+            token2.Token = "token-hash-2";
+
+            await _repository.Add(token1);
+            await _repository.Add(token2);
+            await _context.SaveChangesAsync();
             _context.RefreshTokens.Count().Should().Be(2);
         }
 
         [TestMethod]
-        public async Task GetByTokenAsync_WhenNoTokensExist_ShouldReturnNull()
+        [Description("Verifies that deleting an existing refresh token removes it from the database.")]
+        public async Task DeleteAsync_WhenRefreshTokenExists_ShouldDeleteToken()
         {
-            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-123");
+            User user = CreateUser();
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            RefreshToken refreshToken = CreateRefreshToken(user.Id);
+            await _repository.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
+            await _repository.Delete(refreshToken);
+            await _context.SaveChangesAsync();
+
+            RefreshToken result = await _repository.GetByIdAsync(refreshToken.Id);
+
             result.Should().BeNull();
-        }
-
-        [TestMethod]
-        public async Task GetByTokenAsync_WhenTokenIsNull_ShouldReturnNull()
-        {
-            RefreshToken result = await _repository.GetByTokenAsync(null);
-            result.Should().BeNull();
-        }
-
-        [TestMethod]
-        public async Task GetByTokenAsync_WhenTokenIsEmpty_ShouldReturnNull()
-        {
-            RefreshToken result = await _repository.GetByTokenAsync("");
-            result.Should().BeNull();
-        }
-
-        [TestMethod]
-        public async Task UpdateAsync_WhenRefreshTokenIsUpdated_ShouldPersistChanges()
-        {
-            User user = CreateUser();
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
-            await _repository.AddAsync(refreshToken);
-
-            refreshToken.IsRevoked = true;
-            refreshToken.RevokedAt = DateTime.UtcNow;
-
-            await _repository.UpdateAsync(refreshToken);
-            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-123");
-            result.Should().NotBeNull();
-            result.IsRevoked.Should().BeTrue();
-            result.RevokedAt.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public async Task RevokeAsync_WhenTokenIsValid_ShouldRevokeToken()
-        {
-            User user = CreateUser();
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
-
-            await _repository.AddAsync(refreshToken);
-            await _repository.RevokeAsync(refreshToken);
-            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-123");
-
-            result.Should().NotBeNull();
-            result.IsRevoked.Should().BeTrue();
-            result.RevokedAt.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public async Task RevokeAsync_WhenTokenIsAlreadyRevoked_ShouldRemainRevoked()
-        {
-            User user = CreateUser();
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
-
-            await _repository.AddAsync(refreshToken);
-            await _repository.RevokeAsync(refreshToken);
-            await _repository.RevokeAsync(refreshToken);
-
-            refreshToken.IsRevoked.Should().BeTrue();
-            refreshToken.RevokedAt.Should().NotBeNull();
-        }
-
-        [TestMethod]
-        public async Task RevokeAsync_ShouldSetRevokedAt()
-        {
-            User user = CreateUser();
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
-
-            await _repository.AddAsync(refreshToken);
-            await _repository.RevokeAsync(refreshToken);
-            refreshToken.RevokedAt.Should().NotBeNull();
-            refreshToken.RevokedAt.Value
-                .Should()
-                .BeOnOrBefore(DateTime.UtcNow);
-        }
-
-        [TestMethod]
-        public async Task AddAsync_NewToken_ShouldNotBeRevoked()
-        {
-            User user = CreateUser();
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            RefreshToken refreshToken = CreateRefreshToken(user.Id);
-            await _repository.AddAsync(refreshToken);
-            refreshToken.IsRevoked.Should().BeFalse();
-        }
-
-        [TestMethod]
-        public async Task AddAsync_ShouldStoreExpiryDate()
-        {
-            User user = CreateUser();
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            DateTime expiry = DateTime.UtcNow.AddDays(7);
-            RefreshToken refreshToken = new RefreshToken
-            {
-                Token = "refresh-token-123",
-                UserId = user.Id,
-                ExpiresAt = expiry,
-                IsRevoked = false
-            };
-
-            await _repository.AddAsync(refreshToken);
-            RefreshToken result = await _repository.GetByTokenAsync("refresh-token-123");
-            result.Should().NotBeNull();
-            result.ExpiresAt.Should().Be(expiry);
+            _context.RefreshTokens.Count().Should().Be(0);
         }
     }
 }

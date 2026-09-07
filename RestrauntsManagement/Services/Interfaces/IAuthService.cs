@@ -8,6 +8,6 @@ namespace DotNetRestaurantManagement.Services.Interfaces
         Task<SignupResponse> Signup(SignupRequest request);
         Task<LoginResponse> LoginAsync(LoginRequest request);
         Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken);
-        Task LogoutAsync(string refreshToken);
+        Task LogoutAsync(long userId, long refreshTokenId);
     }
 }

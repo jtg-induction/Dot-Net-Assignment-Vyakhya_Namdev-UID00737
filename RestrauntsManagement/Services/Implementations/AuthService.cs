@@ -15,16 +15,11 @@ namespace DotNetRestaurantManagement.Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
-        private readonly IPasswordHasher _passwordHasher;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
-        private readonly IJwtService _jwtService;
 
-        public AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher,
-                           IRefreshTokenRepository refreshTokenRepository, IJwtService jwtService){
+        public AuthService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository){
             _userRepository = userRepository;
-            _passwordHasher = passwordHasher;
             _refreshTokenRepository = refreshTokenRepository;
-            _jwtService = jwtService;
         }
         public async Task<SignupResponse> Signup(SignupRequest request)
         {
@@ -83,23 +78,29 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
-            var user = await _userRepository.GetByEmailAsync(request.Email);
-            if (user == null) throw new InvalidCredentialsException();
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            string normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            var user = await _userRepository.GetByEmailAsync(normalizedEmail);
+            if (user == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            bool isValidPassword = PasswordHashingHelper.Verify(
+                request.Password,
+                user.Password);
 
-            bool isValid = _passwordHasher.Verify(request.Password, user.Password);
-            if (!isValid) throw new InvalidCredentialsException();
-            string accessToken = _jwtService.GenerateAccessToken(user);
-            string refreshToken = _jwtService.GenerateRefreshToken();
-
+            if (!isValidPassword) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (!user.IsActive) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
+            string refreshToken = TokenHelper.GenerateRefreshToken();
+            string refreshTokenHash = TokenHelper.Hash(refreshToken);
             var refreshTokenEntity = new RefreshToken
             {
                 UserId = user.Id,
-                Token = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow
+                Token = refreshTokenHash
             };
 
-            await _refreshTokenRepository.AddAsync(refreshTokenEntity);
+            await _refreshTokenRepository.Add(refreshTokenEntity);
+            await _refreshTokenRepository.SaveChangesAsync();
+            string accessToken = TokenHelper.GenerateAccessToken(
+                user,
+                refreshTokenEntity.Id);
             return new LoginResponse
             {
                 Name = user.Name,
@@ -111,27 +112,30 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
         public async Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken)
         {
-            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
-            if (token == null) throw new InvalidRefreshTokenException();
-            if (token.IsRevoked) throw new InvalidRefreshTokenException();
-            if (token.ExpiresAt <= DateTime.UtcNow) throw new InvalidRefreshTokenException();
-            var user = token.User;
-            if (!user.IsActive) throw new UserInactiveException();
-            string newAccessToken = _jwtService.GenerateAccessToken(user);
-            string newRefreshToken = _jwtService.GenerateRefreshToken();
-            token.IsRevoked = true;
-            token.RevokedAt = DateTime.UtcNow;
-            await _refreshTokenRepository.UpdateAsync(token);
+            if (string.IsNullOrWhiteSpace(refreshToken)) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            string refreshTokenHash = TokenHelper.Hash(refreshToken);
+            var existingToken = await _refreshTokenRepository.GetByTokenAsync(refreshTokenHash);
+            if (existingToken == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (existingToken.CreatedAt.AddDays(ValidationConstants.RefreshTokenExpiryDays) <= DateTime.UtcNow)
+            {
+                throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            }
 
+            var user = existingToken.User;
+            if (user == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (!user.IsActive) throw new ApiException( HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
+            string newRefreshToken = TokenHelper.GenerateRefreshToken();
+            string newRefreshTokenHash = TokenHelper.Hash(newRefreshToken);
             var newToken = new RefreshToken
             {
                 UserId = user.Id,
-                Token = newRefreshToken,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7)
+                Token = newRefreshTokenHash
             };
-            await _refreshTokenRepository.AddAsync(newToken);
 
+            await _refreshTokenRepository.Add(newToken);
+            await _refreshTokenRepository.Delete(existingToken);
+            await _refreshTokenRepository.SaveChangesAsync();
+            string newAccessToken = TokenHelper.GenerateAccessToken(user, newToken.Id);
             return new RefreshTokenResponse
             {
                 AccessToken = newAccessToken,
@@ -139,19 +143,14 @@ namespace DotNetRestaurantManagement.Services.Implementations
             };
         }
 
-        public async Task LogoutAsync(string refreshToken){
-            var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
-            if (token == null) throw new InvalidRefreshTokenException();
-            if (token.IsRevoked) throw new InvalidRefreshTokenException();
-            if (token.ExpiresAt <= DateTime.UtcNow) throw new InvalidRefreshTokenException();
-            var user = token.User;
-            if (user == null) throw new InvalidRefreshTokenException();
-
-            token.IsRevoked = true;
-            token.RevokedAt = DateTime.UtcNow;
-            user.TokenVersion++;
-
-            await _refreshTokenRepository.UpdateAsync(token);
+        public async Task LogoutAsync(long userId, long refreshTokenId)
+        {
+            if (userId <= 0 || refreshTokenId <= 0) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            var existingToken = await _refreshTokenRepository.GetByIdAsync(refreshTokenId);
+            if (existingToken == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (existingToken.UserId != userId) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            await _refreshTokenRepository.Delete(existingToken);
+            await _refreshTokenRepository.SaveChangesAsync();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using DotNetRestaurantManagement.Controllers;
+using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Services.Interfaces;
@@ -6,8 +7,11 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
+using System.IO;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http.Results;
 
 namespace RestrauntsManagement.Tests.Controllers
@@ -58,10 +62,8 @@ namespace RestrauntsManagement.Tests.Controllers
             };
         }
 
-        /// <summary>
-        /// Verifies that a valid signup request returns HTTP 201 Created with the expected user details.
-        /// </summary>
         [TestMethod]
+        [Description("Verifies that a valid signup request returns HTTP 201 Created with the expected user details.")]
         public async Task Signup_ValidRequest_ReturnsCreated()
         {
             SignupRequest request = GetValidRequest();
@@ -81,27 +83,8 @@ namespace RestrauntsManagement.Tests.Controllers
             createdResult.Content.Balance.Should().Be(1000);
         }
 
-        /// <summary>
-        /// Verifies that the signup service is called exactly once for a valid signup request.
-        /// </summary>
         [TestMethod]
-        public async Task Signup_ValidRequest_CallsServiceExactlyOnce()
-        {
-            SignupRequest request = GetValidRequest();
-            SignupResponse response = GetValidResponse();
-            _authServiceMock
-                .Setup(x => x.Signup(It.IsAny<SignupRequest>()))
-                .ReturnsAsync(response);
-            await _controller.Signup(request);
-            _authServiceMock.Verify(
-                x => x.Signup(It.IsAny<SignupRequest>()),
-                Times.Once);
-        }
-
-        /// <summary>
-        /// Verifies that a null signup request is passed to the signup service and the controller returns the service response.
-        /// </summary>
-        [TestMethod]
+        [Description("Verifies that a null signup request is passed to the signup service and the controller returns the service response.")]
         public async Task Signup_NullRequest_PassesRequestToService()
         {
             SignupRequest request = null;
@@ -118,10 +101,8 @@ namespace RestrauntsManagement.Tests.Controllers
                 Times.Once);
         }
 
-        /// <summary>
-        /// Verifies that an exception thrown by the signup service is propagated by the controller.
-        /// </summary>
         [TestMethod]
+        [Description("Verifies that an exception thrown by the signup service is propagated by the controller.")]
         public async Task Signup_ServiceThrowsException_PropagatesException()
         {
             SignupRequest request = GetValidRequest();
@@ -134,10 +115,8 @@ namespace RestrauntsManagement.Tests.Controllers
                 .WithMessage("Test exception");
         }
 
-        /// <summary>
-        /// Verifies that the controller passes the correct signup request data to the signup service.
-        /// </summary>
         [TestMethod]
+        [Description("Verifies that the controller passes the correct signup request data to the signup service.")]
         public async Task Signup_PassesCorrectRequestToService()
         {
             SignupRequest request = GetValidRequest();
@@ -153,60 +132,12 @@ namespace RestrauntsManagement.Tests.Controllers
                         r.Email == "vyakhyanamdev@test.com" &&
                         r.PhoneNumber == "9876543210"
                     )),
-            )
-        }
-        
-        /// <summary>
-        /// Verifies that the controller constructor throws an ArgumentNullException when the auth service is null.
-        /// </summary>
-        [TestMethod]
-        public void Constructor_NullAuthService_ThrowsArgumentNullException()
-        {
-            Action act = () => new AuthController(null);
-            act.Should().Throw<ArgumentNullException>();
-        }
-        
-        public async Task Login_WithInvalidCredentials_ShouldReturnUnauthorized()
-        {
-            LoginRequest request = new LoginRequest
-            {
-                Email = "vyakhya@test.com",
-                Password = "WrongPassword"
-            };
-
-            _authServiceMock
-                .Setup(x => x.LoginAsync(request))
-                .ThrowsAsync(new InvalidCredentialsException());
-            IHttpActionResult result = await _controller.Login(request);
-            result.Should().BeOfType<UnauthorizedResult>();
-            _authServiceMock.Verify(
-                x => x.LoginAsync(request),
                 Times.Once);
         }
 
         [TestMethod]
-        public async Task Login_WhenServiceThrowsException_ShouldReturnInternalServerError()
-        {
-            LoginRequest request = new LoginRequest
-            {
-                Email = "vyakhya@test.com",
-                Password = "Vyakhya@123"
-            };
-
-            _authServiceMock
-                .Setup(x => x.LoginAsync(request))
-                .ThrowsAsync(
-                    new System.Exception("Database error"));
-
-            IHttpActionResult result = await _controller.Login(request);
-            result.Should().BeOfType<InternalServerErrorResult>();
-            _authServiceMock.Verify(
-                x => x.LoginAsync(request),
-                Times.Once);
-        }
-
-        [TestMethod]
-        public async Task Login_ShouldPassCorrectRequestToService()
+        [Description("Verifies that Login successfully processes a valid login request and returns a non-null response while calling the authentication service once.")]
+        public async Task Login_ValidRequest_ReturnsOk()
         {
             LoginRequest request = new LoginRequest
             {
@@ -219,31 +150,139 @@ namespace RestrauntsManagement.Tests.Controllers
                 AccessToken = "access-token",
                 RefreshToken = "refresh-token",
                 Name = "Vyakhya",
-                Email = "vyakhya@test.com",
+                Email = "vyakhya@test.com"
             };
 
             _authServiceMock
-                .Setup(x => x.LoginAsync(It.IsAny<LoginRequest>()))
+                .Setup(x => x.LoginAsync(request))
                 .ReturnsAsync(response);
 
-            await _controller.Login(request);
+            var result = await _controller.Login(request);
+            result.Should().NotBeNull();
             _authServiceMock.Verify(
-                service => service.LoginAsync(
-                    It.Is<LoginRequest>(req =>
-                        req.Email == "vyakhya@test.com" &&
-                        req.Password == "Vyakhya@123")),
+                x => x.LoginAsync(request),
                 Times.Once);
         }
 
         [TestMethod]
-        public async Task Login_WithNullRequest_ShouldNotCallService()
+        [Description("Verifies that an exception thrown by the login service is propagated by the controller.")]
+        public async Task Login_ServiceThrowsException_PropagatesException()
         {
-            IHttpActionResult result = await _controller.Login(null);
+            LoginRequest request = new LoginRequest
+            {
+                Email = "vyakhya@test.com",
+                Password = "Vyakhya@123"
+            };
+
+            _authServiceMock
+                .Setup(x => x.LoginAsync(request))
+                .ThrowsAsync(new Exception("Database error"));
+
+            Func<Task> act = async () => await _controller.Login(request);
+            await act.Should()
+                .ThrowAsync<Exception>()
+                .WithMessage("Database error");
+        }
+
+        [TestMethod]
+        [Description("Verifies that RefreshToken successfully processes a valid refresh token request and calls the authentication service once.")]
+        public async Task RefreshToken_ValidRequest_ReturnsOk()
+        {
+            var request = new RefreshTokenRequest
+            {
+                RefreshToken = "refresh-token"
+            };
+
+            var response = new RefreshTokenResponse
+            {
+                AccessToken = "new-access-token",
+                RefreshToken = "new-refresh-token"
+            };
+
+            _authServiceMock
+                .Setup(x => x.RefreshTokenAsync(request.RefreshToken))
+                .ReturnsAsync(response);
+
+            var result = await _controller.RefreshToken(request);
             result.Should().NotBeNull();
             _authServiceMock.Verify(
-                x => x.LoginAsync(
-                    It.IsAny<LoginRequest>()),
-                Times.Never);
+                x => x.RefreshTokenAsync(request.RefreshToken),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies that an unexpected exception thrown by the authentication service is propagated from the RefreshToken endpoint.")]
+        public async Task RefreshToken_ServiceThrowsException_PropagatesException()
+        {
+            var request = new RefreshTokenRequest
+            {
+                RefreshToken = "refresh-token"
+            };
+
+            _authServiceMock
+                .Setup(x => x.RefreshTokenAsync(request.RefreshToken))
+                .ThrowsAsync(new Exception("Database error"));
+
+            Func<Task> act = async () => await _controller.RefreshToken(request);
+            await act.Should()
+                .ThrowAsync<Exception>()
+                .WithMessage("Database error");
+        }
+
+        [TestMethod]
+        [Description("Verifies that Logout extracts the user ID and refresh token ID from the authenticated user's claims and passes them correctly to the authentication service.")]
+        public async Task Logout_ValidClaims_CallsService()
+        {
+            var claims = new[]
+            {
+                new Claim("userId", "1"),
+                new Claim("refreshTokenId", "10"),
+                new Claim("role", "Customer")
+            };
+
+            _controller.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
+
+            _authServiceMock
+                .Setup(x => x.LogoutAsync(1, 10))
+                .Returns(Task.CompletedTask);
+
+            var result = await _controller.Logout();
+
+            result.Should().NotBeNull();
+
+            _authServiceMock.Verify(
+                x => x.LogoutAsync(1, 10),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies that Logout throws an UnauthorizedAccessException when the user ID claim is missing.")]
+        public async Task Logout_MissingUserIdClaim_ThrowsUnauthorizedAccessException()
+        {
+            var claims = new[]
+            {
+                new Claim("refreshTokenId", "10"),
+                new Claim("role", "Customer")
+            };
+
+            _controller.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
+            Func<Task> act = async () => await _controller.Logout();
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        }
+
+        [TestMethod]
+        [Description("Verifies that Logout throws an UnauthorizedAccessException when the refresh token ID claim is missing.")]
+        public async Task Logout_MissingRefreshTokenIdClaim_ThrowsUnauthorizedAccessException()
+        {
+            var claims = new[]
+            {
+                new Claim("userId", "1"),
+                new Claim("role", "Customer")
+            };
+
+            _controller.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"));
+            Func<Task> act = async () => await _controller.Logout();
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using DotNetRestaurantManagement.Data;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Repositories.Interfaces;
-using System;
 using System.Data.Entity;
 using System.Threading.Tasks;
 
@@ -9,34 +8,39 @@ namespace DotNetRestaurantManagement.Repositories
 {
     public class RefreshTokenRepository : IRefreshTokenRepository
     {
-        private readonly RestaurantDbContext _context;
+        protected readonly RestaurantDbContext _context;
+
         public RefreshTokenRepository(RestaurantDbContext context)
         {
             _context = context;
         }
 
-        public async Task AddAsync(RefreshToken refreshToken)
+        public Task Add(RefreshToken refreshToken)
         {
             _context.RefreshTokens.Add(refreshToken);
-            await _context.SaveChangesAsync();
+            return Task.CompletedTask;
         }
 
-        public async Task<RefreshToken> GetByTokenAsync(string token)
+        public async Task<RefreshToken> GetByTokenAsync(string tokenHash)
         {
             return await _context.RefreshTokens
                 .Include(x => x.User)
-                .FirstOrDefaultAsync(x => x.Token == token);
+                .FirstOrDefaultAsync(x => x.Token == tokenHash);
         }
 
-        public async Task UpdateAsync(RefreshToken refreshToken)
+        public async Task<RefreshToken> GetByIdAsync(long id)
         {
-            await _context.SaveChangesAsync();
+            return await _context.RefreshTokens.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task RevokeAsync(RefreshToken refreshToken)
+        public Task Delete(RefreshToken refreshToken)
         {
-            refreshToken.IsRevoked = true;
-            refreshToken.RevokedAt = DateTime.UtcNow;
+            _context.RefreshTokens.Remove(refreshToken);
+            return Task.CompletedTask;
+        }
+
+        public async Task SaveChangesAsync()
+        {
             await _context.SaveChangesAsync();
         }
     }

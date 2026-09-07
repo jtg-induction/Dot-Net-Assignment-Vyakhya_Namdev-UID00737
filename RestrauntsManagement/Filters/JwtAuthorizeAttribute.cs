@@ -25,7 +25,7 @@ namespace DotNetRestaurantManagement.Filters
             try
             {
                 var cookie = HttpContext.Current.Request.Cookies["AccessToken"];
-                if (cookie == null) return false;
+                if (cookie == null || string.IsNullOrWhiteSpace(cookie.Value)) return false;
                 string token = cookie.Value;
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(ConfigurationManager.AppSettings["JwtSecret"]);
@@ -41,14 +41,11 @@ namespace DotNetRestaurantManagement.Filters
                     out validatedToken);
 
                 var userIdClaim = userInfo.FindFirst(JwtRegisteredClaimNames.Sub);
-                var tokenVersionClaim = userInfo.FindFirst("TokenVersion");
-                if (userIdClaim == null || tokenVersionClaim == null) return false;
+                if (userIdClaim == null) return false;
                 long userId = Convert.ToInt64(userIdClaim.Value);
-                long tokenVersion = Convert.ToInt64(tokenVersionClaim.Value);
                 var user = _context.Users.FirstOrDefault(x => x.Id == userId);
                 if (user == null) return false;
                 if (!user.IsActive) return false;
-                if (user.TokenVersion != tokenVersion) return false;
                 HttpContext.Current.User = userInfo;
                 Thread.CurrentPrincipal = userInfo;
                 return true;

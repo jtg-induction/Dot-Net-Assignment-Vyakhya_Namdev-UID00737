@@ -1,4 +1,5 @@
 ﻿using DotNetRestaurantManagement.Controllers;
+using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Services.Interfaces;
@@ -6,8 +7,11 @@ using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
+using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using System.Web;
+using System.Web.Http;
 using System.Web.Http.Results;
 
 namespace RestrauntsManagement.Tests.Controllers
@@ -175,50 +179,11 @@ namespace RestrauntsManagement.Tests.Controllers
                         r.Email == "vyakhyanamdev@test.com" &&
                         r.PhoneNumber == "9876543210"
                     )),
-            )
-        }
-        
-        public async Task Login_WithInvalidCredentials_ShouldReturnUnauthorized()
-        {
-            LoginRequest request = new LoginRequest
-            {
-                Email = "vyakhya@test.com",
-                Password = "WrongPassword"
-            };
-
-            _authServiceMock
-                .Setup(x => x.LoginAsync(request))
-                .ThrowsAsync(new InvalidCredentialsException());
-            IHttpActionResult result = await _controller.Login(request);
-            result.Should().BeOfType<UnauthorizedResult>();
-            _authServiceMock.Verify(
-                x => x.LoginAsync(request),
                 Times.Once);
         }
 
         [TestMethod]
-        public async Task Login_WhenServiceThrowsException_ShouldReturnInternalServerError()
-        {
-            LoginRequest request = new LoginRequest
-            {
-                Email = "vyakhya@test.com",
-                Password = "Vyakhya@123"
-            };
-
-            _authServiceMock
-                .Setup(x => x.LoginAsync(request))
-                .ThrowsAsync(
-                    new System.Exception("Database error"));
-
-            IHttpActionResult result = await _controller.Login(request);
-            result.Should().BeOfType<InternalServerErrorResult>();
-            _authServiceMock.Verify(
-                x => x.LoginAsync(request),
-                Times.Once);
-        }
-
-        [TestMethod]
-        public async Task Login_ShouldPassCorrectRequestToService()
+        public async Task Login_ValidRequest_ReturnsOk()
         {
             LoginRequest request = new LoginRequest
             {
@@ -231,31 +196,126 @@ namespace RestrauntsManagement.Tests.Controllers
                 AccessToken = "access-token",
                 RefreshToken = "refresh-token",
                 Name = "Vyakhya",
-                Email = "vyakhya@test.com",
+                Email = "vyakhya@test.com"
             };
 
             _authServiceMock
-                .Setup(x => x.LoginAsync(It.IsAny<LoginRequest>()))
+                .Setup(x => x.LoginAsync(request))
                 .ReturnsAsync(response);
 
-            await _controller.Login(request);
+            var result = await _controller.Login(request);
+            result.Should().NotBeNull();
             _authServiceMock.Verify(
-                service => service.LoginAsync(
-                    It.Is<LoginRequest>(req =>
-                        req.Email == "vyakhya@test.com" &&
-                        req.Password == "Vyakhya@123")),
+                x => x.LoginAsync(request),
                 Times.Once);
         }
 
         [TestMethod]
-        public async Task Login_WithNullRequest_ShouldNotCallService()
+        public async Task Login_ValidRequest_SetsAccessAndRefreshTokenCookies()
         {
-            IHttpActionResult result = await _controller.Login(null);
+            LoginRequest request = new LoginRequest
+            {
+                Email = "vyakhya@test.com",
+                Password = "Vyakhya@123"
+            };
+
+            LoginResponse response = new LoginResponse
+            {
+                AccessToken = "access-token",
+                RefreshToken = "refresh-token",
+                Name = "Vyakhya",
+                Email = "vyakhya@test.com"
+            };
+
+            _authServiceMock
+                .Setup(x => x.LoginAsync(request))
+                .ReturnsAsync(response);
+
+            await _controller.Login(request);
+            var accessTokenCookie = HttpContext.Current.Response.Cookies["AccessToken"];
+            var refreshTokenCookie = HttpContext.Current.Response.Cookies["RefreshToken"];
+            accessTokenCookie.Should().NotBeNull();
+            accessTokenCookie.Value.Should().Be("access-token");
+            accessTokenCookie.HttpOnly.Should().BeTrue();
+            refreshTokenCookie.Should().NotBeNull();
+            refreshTokenCookie.Value.Should().Be("refresh-token");
+            refreshTokenCookie.HttpOnly.Should().BeTrue();
+        }
+
+        [TestMethod]
+        public async Task Login_ServiceThrowsException_PropagatesException()
+        {
+            LoginRequest request = new LoginRequest
+            {
+                Email = "vyakhya@test.com",
+                Password = "Vyakhya@123"
+            };
+
+            _authServiceMock
+                .Setup(x => x.LoginAsync(request))
+                .ThrowsAsync(new Exception("Database error"));
+
+            Func<Task> act = async () => await _controller.Login(request);
+            await act.Should()
+                .ThrowAsync<Exception>()
+                .WithMessage("Database error");
+        }
+
+        [TestMethod]
+        public async Task Logout_ValidRefreshToken_CallsService()
+        {
+            var refreshTokenCookie = new HttpCookie(
+                "RefreshToken",
+                "refresh-token");
+
+            HttpContext.Current.Request.Cookies.Add(refreshTokenCookie);
+            _authServiceMock
+                .Setup(x => x.LogoutAsync("refresh-token"))
+                .Returns(Task.CompletedTask);
+
+            var result = await _controller.Logout();
             result.Should().NotBeNull();
             _authServiceMock.Verify(
-                x => x.LoginAsync(
-                    It.IsAny<LoginRequest>()),
-                Times.Never);
+                x => x.LogoutAsync("refresh-token"),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task Logout_ValidRefreshToken_DeletesCookies()
+        {
+            var refreshTokenCookie = new HttpCookie(
+                "RefreshToken",
+                "refresh-token");
+
+            HttpContext.Current.Request.Cookies.Add(refreshTokenCookie);
+            _authServiceMock
+                .Setup(x => x.LogoutAsync("refresh-token"))
+                .Returns(Task.CompletedTask);
+
+            await _controller.Logout();
+            var accessTokenCookie = HttpContext.Current.Response.Cookies["AccessToken"];
+            var deletedRefreshTokenCookie = HttpContext.Current.Response.Cookies["RefreshToken"];
+            accessTokenCookie.Should().NotBeNull();
+            deletedRefreshTokenCookie.Should().NotBeNull();
+            accessTokenCookie.Expires.Should().BeBefore(DateTime.Now);
+            deletedRefreshTokenCookie.Expires.Should().BeBefore(DateTime.Now);
+        }
+
+        [TestMethod]
+        public async Task Logout_ServiceThrowsException_PropagatesException()
+        {
+            var refreshTokenCookie = new HttpCookie(
+                "RefreshToken",
+                "refresh-token");
+
+            HttpContext.Current.Request.Cookies.Add(refreshTokenCookie);
+            _authServiceMock
+                .Setup(x => x.LogoutAsync("refresh-token"))
+                .ThrowsAsync(new Exception("Database error"));
+            Func<Task> act = async () => await _controller.Logout();
+            await act.Should()
+                .ThrowAsync<Exception>()
+                .WithMessage("Database error");
         }
     }
 }

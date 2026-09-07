@@ -17,3 +17,4 @@ packages/
 *.suo
 connectionStrings.config
 RestaurantDataSeeder
+secrets.config

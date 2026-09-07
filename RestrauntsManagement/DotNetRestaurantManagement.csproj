@@ -218,13 +218,12 @@
     <Compile Include="Migrations\202609080921464_InitialDatabaseSetup.Designer.cs">
       <DependentUpon>202609080921464_InitialDatabaseSetup.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202608061427278_AddRefreshTokenTable.cs" />
-    <Compile Include="Migrations\202608061427278_AddRefreshTokenTable.Designer.cs">
-      <DependentUpon>202608061427278_AddRefreshTokenTable.cs</DependentUpon>
+    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Migrations\202609081543009_AddRefreshTokenTable.cs" />
+    <Compile Include="Migrations\202609081543009_AddRefreshTokenTable.Designer.cs">
+      <DependentUpon>202609081543009_AddRefreshTokenTable.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />
     <Compile Include="Models\DTO\SignupResponse.cs" />
@@ -270,10 +269,14 @@
   <ItemGroup>
     <Content Include="connectionStrings.config" />
     <None Include="packages.config" />
+    <Content Include="secrets.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Migrations\202609080921464_InitialDatabaseSetup.resx">
       <DependentUpon>202609080921464_InitialDatabaseSetup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202609081543009_AddRefreshTokenTable.resx">
+      <DependentUpon>202609081543009_AddRefreshTokenTable.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

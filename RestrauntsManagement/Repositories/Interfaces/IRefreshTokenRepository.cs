@@ -7,7 +7,6 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
     {
         Task AddAsync(RefreshToken refreshToken);
         Task<RefreshToken> GetByTokenAsync(string token);
-        Task UpdateAsync(RefreshToken refreshToken);
-        Task RevokeAsync(RefreshToken refreshToken);
+        Task DeleteAsync(RefreshToken refreshToken);
     }
 }

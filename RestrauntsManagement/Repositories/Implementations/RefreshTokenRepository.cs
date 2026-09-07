@@ -28,15 +28,9 @@ namespace DotNetRestaurantManagement.Repositories
                 .FirstOrDefaultAsync(x => x.Token == token);
         }
 
-        public async Task UpdateAsync(RefreshToken refreshToken)
+        public async Task DeleteAsync(RefreshToken refreshToken)
         {
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task RevokeAsync(RefreshToken refreshToken)
-        {
-            refreshToken.IsRevoked = true;
-            refreshToken.RevokedAt = DateTime.UtcNow;
+            _context.RefreshTokens.Remove(refreshToken);
             await _context.SaveChangesAsync();
         }
     }

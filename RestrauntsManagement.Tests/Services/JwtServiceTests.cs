@@ -23,8 +23,7 @@ namespace RestrauntsManagement.Tests.Services
                 Id = 1,
                 Name = "Vyakhya Namdev",
                 Email = "vyakhya.namdev@test.com",
-                Role = UserRole.Customer,
-                TokenVersion = 1
+                Role = UserRole.Customer
             };
         }
 
@@ -60,10 +59,6 @@ namespace RestrauntsManagement.Tests.Services
             jwtToken.Claims.Should().Contain(x =>
                 x.Type == ClaimTypes.Role &&
                 x.Value == UserRole.Customer.ToString());
-
-            jwtToken.Claims.Should().Contain(x =>
-                x.Type == "TokenVersion" &&
-                x.Value == "1");
         }
 
         [TestMethod]

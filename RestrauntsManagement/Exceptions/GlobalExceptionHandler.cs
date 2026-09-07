@@ -17,9 +17,10 @@ namespace DotNetRestaurantManagement
             if (exception is DuplicateEmailException || exception is DuplicatePhoneNumberException){
                 statusCode = HttpStatusCode.Conflict;
                 message = exception.Message;
-            }
-            else
-            {
+            }else if(exception is InvalidCredentialsException || exception is InvalidRefreshTokenException){
+                statusCode = HttpStatusCode.Unauthorized;
+                message = exception.Message;
+            }else{
                 statusCode = HttpStatusCode.InternalServerError;
                 message = exception.Message;
             }

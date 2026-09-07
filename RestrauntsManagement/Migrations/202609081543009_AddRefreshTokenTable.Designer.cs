@@ -13,7 +13,7 @@ namespace DotNetRestaurantManagement.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "202608061427278_AddRefreshTokenTable"; }
+            get { return "202609081543009_AddRefreshTokenTable"; }
         }
         
         string IMigrationMetadata.Source

@@ -92,7 +92,6 @@ namespace DotNetRestaurantManagement.Services.Implementations
             {
                 UserId = user.Id,
                 Token = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -110,22 +109,17 @@ namespace DotNetRestaurantManagement.Services.Implementations
         {
             var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
             if (token == null) throw new InvalidRefreshTokenException();
-            if (token.IsRevoked) throw new InvalidRefreshTokenException();
-            if (token.ExpiresAt <= DateTime.UtcNow) throw new InvalidRefreshTokenException();
             var user = token.User;
             if (!user.IsActive) throw new UserInactiveException();
             string newAccessToken = _jwtService.GenerateAccessToken(user);
             string newRefreshToken = _jwtService.GenerateRefreshToken();
-            token.IsRevoked = true;
-            token.RevokedAt = DateTime.UtcNow;
-            await _refreshTokenRepository.UpdateAsync(token);
+            await _refreshTokenRepository.DeleteAsync(token);
 
             var newToken = new RefreshToken
             {
                 UserId = user.Id,
                 Token = newRefreshToken,
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7)
+                CreatedAt = DateTime.UtcNow
             };
             await _refreshTokenRepository.AddAsync(newToken);
 
@@ -137,18 +131,10 @@ namespace DotNetRestaurantManagement.Services.Implementations
         }
 
         public async Task LogoutAsync(string refreshToken){
+            if (string.IsNullOrWhiteSpace(refreshToken)) throw new InvalidRefreshTokenException();
             var token = await _refreshTokenRepository.GetByTokenAsync(refreshToken);
             if (token == null) throw new InvalidRefreshTokenException();
-            if (token.IsRevoked) throw new InvalidRefreshTokenException();
-            if (token.ExpiresAt <= DateTime.UtcNow) throw new InvalidRefreshTokenException();
-            var user = token.User;
-            if (user == null) throw new InvalidRefreshTokenException();
-
-            token.IsRevoked = true;
-            token.RevokedAt = DateTime.UtcNow;
-            user.TokenVersion++;
-
-            await _refreshTokenRepository.UpdateAsync(token);
+            await _refreshTokenRepository.DeleteAsync(token);
         }
     }
 }

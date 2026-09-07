@@ -9,6 +9,5 @@ namespace DotNetRestaurantManagement.Services.Interfaces
         Task<LoginResponse> LoginAsync(LoginRequest request);
         Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync(long userId, long refreshTokenId);
-        Task DeactivateAccountAsync(int userId);
     }
 }

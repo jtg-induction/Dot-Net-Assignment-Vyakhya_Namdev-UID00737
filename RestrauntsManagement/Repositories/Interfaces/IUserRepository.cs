@@ -14,6 +14,5 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         Task<UserAddress> GetUserAddressAsync(long userId);
         Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, long userId);
         void AddUserAddress(Address address, UserAddress userAddress);
-        Task DeleteAllByUserIdAsync(long userId);
     }
 }

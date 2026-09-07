@@ -4,6 +4,7 @@ using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Models.Enums;
+using DotNetRestaurantManagement.Repositories;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Interfaces;
 using System;
@@ -15,9 +16,11 @@ namespace DotNetRestaurantManagement.Services.Implementations
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
-        public UserService(IUserRepository userRepository)
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
+        public UserService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository)
         {
             _userRepository = userRepository;
+            _refreshTokenRepository = refreshTokenRepository;
         }
 
         public async Task<UpdateProfileResponse> UpdateProfileAsync(
@@ -132,7 +135,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
             user.Password =
                 PasswordHashingHelper.Hash(request.NewPassword);
-            await _userRepository.DeleteAllByUserIdAsync(userId);
+            await _refreshTokenRepository.DeleteAllTokensByUserIdAsync(userId);
             await _userRepository.SaveChangesAsync();
         }
 
@@ -196,6 +199,28 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 Country = address.Country,
                 AddressType = (int)address.AddressType
             };
+        }
+
+        public async Task DeactivateAccountAsync(long userId, long refreshTokenId)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || !user.IsActive)
+            {
+                throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
+            }
+            user.IsActive = false;
+
+            if (refreshTokenId > 0)
+            {
+                var refreshToken =
+                    await _refreshTokenRepository.GetByIdAsync(refreshTokenId);
+
+                if (refreshToken != null && refreshToken.UserId == userId)
+                {
+                    await _refreshTokenRepository.DeleteAllTokensByUserIdAsync(userId);
+                }
+            }
+            await _userRepository.SaveChangesAsync();
         }
     }
 }

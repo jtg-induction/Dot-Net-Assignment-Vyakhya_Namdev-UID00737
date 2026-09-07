@@ -1,6 +1,7 @@
+using DotNetRestaurantManagement.Exceptions;
+using DotNetRestaurantManagement.Filters;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Services.Interfaces;
-using DotNetRestaurantManagement.Exceptions;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -122,6 +123,7 @@ namespace DotNetRestaurantManagement.Controllers
             });
         }
 
+        /// Gets the current user's ID from JWT claims.
         private int GetUserIdFromClaims()
         {
             var claimsIdentity = User.Identity as ClaimsIdentity;
@@ -143,116 +145,47 @@ namespace DotNetRestaurantManagement.Controllers
             return userId;
         }
 
+        /// Updates the current user's profile.
         [JwtAuthorize]
         [HttpPut]
         [Route("update-profile")]
         public async Task<IHttpActionResult> UpdateProfile(UpdateProfileRequest request)
         {
-            if (request == null) return BadRequest("Request body is required!");
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
+            int userId = GetUserIdFromClaims();
+            var response = await _authService.UpdateProfileAsync(userId,request);
+            return Ok(new
             {
-                int userId = GetUserIdFromClaims();
-                var response = await _authService.UpdateProfileAsync(userId,request);
-                return Ok(new
-                {
-                    response.Id,
-                    response.Name,
-                    response.Email,
-                    response.PhoneNumber,
-                    Message = "Profile updated successfully!"
-                });
-            }
-            catch (DuplicateEmailException ex)
-            {
-                return Content(HttpStatusCode.Conflict, new ErrorResponse { Message = ex.Message });
-            }
-            catch (DuplicatePhoneNumberException ex)
-            {
-                return Content(HttpStatusCode.Conflict, new ErrorResponse { Message = ex.Message });
-            }
-            catch (PhoneNumberAlreadyRegistered ex)
-            {
-                return Content(HttpStatusCode.Conflict, new ErrorResponse { Message = ex.Message });
-            }
-            catch (UserNotFound)
-            {
-                return NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
-            }
-            catch (Exception)
-            {
-                return InternalServerError();
-            }
+                response.Id,
+                response.Name,
+                response.Email,
+                response.PhoneNumber,
+                Message = "Profile updated successfully!"
+            });
         }
 
+        /// Changes the current user's password.
         [JwtAuthorize]
         [HttpPut]
         [Route("update-password")]
         public async Task<IHttpActionResult> ChangePassword(ChangePasswordRequest request)
         {
-            if (request == null) return BadRequest("Request body is required!");
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
+            int userId = GetUserIdFromClaims();
+            await _authService.ChangePasswordAsync(userId, request);
+            return Ok(new
             {
-                int userId = GetUserIdFromClaims();
-                await _authService.ChangePasswordAsync(userId, request);
-                return Ok(new
-                {
-                    Message = "Password updated successfully!"
-                });
-            }
-            catch (InvalidCredentialsException)
-            {
-                return Content(
-                    HttpStatusCode.Unauthorized,
-                    new
-                    {
-                        Message = "Current password is incorrect!"
-                    });
-            }
-            catch (UserNotFound)
-            {
-                return NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
-            }
-            catch (Exception)
-            {
-                return InternalServerError();
-            }
+                Message = "Password updated successfully!"
+            });
         }
 
+        /// Adds an address for the current user.
         [JwtAuthorize]
         [HttpPost]
         [Route("update-address")]
         public async Task<IHttpActionResult> AddAddress(AddressRequest request)
         {
-            if (request == null) return BadRequest("Request body is required!");
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            try
-            {
-                int userId = GetUserIdFromClaims();
-                var response = await _authService.AddAddressAsync(userId, request);
-                return Content(HttpStatusCode.Created,response);
-            }
-            catch (UserNotFound)
-            {
-                return NotFound();
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized();
-            }
-            catch (Exception)
-            {
-                return InternalServerError();
-            }
+            int userId = GetUserIdFromClaims();
+            var response = await _authService.AddAddressAsync(userId, request);
+            return Content(HttpStatusCode.Created,response);
         }
     }
 }

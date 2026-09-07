@@ -223,9 +223,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
             await _userRepository.SaveChanges();
         }
 
-        public async Task<AddressResponse> AddAddressAsync(
-    int userId,
-    AddressRequest request)
+        public async Task<AddressResponse> AddAddressAsync(int userId, AddressRequest request)
         {
             if (request == null)
             {
@@ -248,8 +246,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 PinCode = request.PinCode.Trim(),
                 Country = request.Country.Trim(),
                 AddressType = (AddressType)request.AddressType,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             _userRepository.AddAddress(address);

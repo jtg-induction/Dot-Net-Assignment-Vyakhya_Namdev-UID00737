@@ -52,7 +52,6 @@ namespace DotNetRestaurantManagement.Filters
                 long userId = Convert.ToInt64(userIdClaim.Value);
                 var user = _context.Users.FirstOrDefault(x => x.Id == userId);
                 if (user == null || !user.IsActive) return false;
-                if (user.TokenVersion != tokenVersion) return false;
                 HttpContext.Current.User = userInfo;
                 Thread.CurrentPrincipal = userInfo;
                 return true;

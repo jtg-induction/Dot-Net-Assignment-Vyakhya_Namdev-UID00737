@@ -286,9 +286,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null || !user.IsActive) throw new UserNotFound();
             user.IsActive = false;
-
-            // Invalidate all existing JWT access tokens
-            user.TokenVersion++;
+            await _refreshTokenRepository.DeleteByUserIdAsync(userId);
             await _userRepository.SaveChanges();
         }
     }

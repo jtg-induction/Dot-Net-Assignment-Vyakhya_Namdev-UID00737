@@ -188,41 +188,19 @@ namespace DotNetRestaurantManagement.Controllers
             return Content(HttpStatusCode.Created,response);
         }
 
+        /// Deactivates the user's account from all devices and market it as in-active user
         [JwtAuthorize]
         [HttpPut]
         [Route("deactivate")]
         public async Task<IHttpActionResult> DeactivateAccount(){
-            try{
-                int userId = GetUserIdFromClaims();
-                await _authService.DeactivateAccountAsync(userId);
-                DeleteCookie("AccessToken");
-                DeleteCookie("RefreshToken");
-                return Ok(new
-                {
-                    Message = "Account deactivated successfully!"
-                });
-            }
-            catch (UserNotFound ex)
+            int userId = GetUserIdFromClaims();
+            await _authService.DeactivateAccountAsync(userId);
+            DeleteCookie("AccessToken");
+            DeleteCookie("RefreshToken");
+            return Ok(new
             {
-                return Content(HttpStatusCode.BadRequest, new ErrorResponse
-                    {
-                        Message = ex.Message
-                    });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Content(HttpStatusCode.BadRequest, new ErrorResponse
-                {
-                    Message = ex.Message
-                });
-            }
-            catch (Exception ex)
-            {
-                return Content(HttpStatusCode.BadRequest, new ErrorResponse
-                {
-                    Message = ex.Message
-                });
-            }
+                Message = "Account deactivated successfully!"
+            });
         }
     }
 }

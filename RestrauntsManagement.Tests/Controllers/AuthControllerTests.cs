@@ -9,6 +9,7 @@ using Moq;
 using System;
 using System.IO;
 using System.Net;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
@@ -61,6 +62,17 @@ namespace RestrauntsManagement.Tests.Controllers
                 Balance = 1000,
                 Message = "User registered successfully!"
             };
+        }
+
+        private void SetUser(int userId)
+        {
+            var identity = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+                },
+                "TestAuthentication");
+
+            _controller.User = new ClaimsPrincipal(identity);
         }
 
         [TestMethod]
@@ -316,6 +328,83 @@ namespace RestrauntsManagement.Tests.Controllers
             await act.Should()
                 .ThrowAsync<Exception>()
                 .WithMessage("Database error");
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccount_ValidUser_ReturnsOk()
+        {
+            int userId = 1;
+            SetUser(userId);
+            _authServiceMock
+                .Setup(x => x.DeactivateAccountAsync(userId))
+                .Returns(Task.CompletedTask);
+
+            var result = await _controller.DeactivateAccount();
+            result.Should().NotBeNull();
+            result.Should().BeAssignableTo<IHttpActionResult>();
+            _authServiceMock.Verify(
+                x => x.DeactivateAccountAsync(userId),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccount_UserNotFound_PropagatesException()
+        {
+            int userId = 1;
+            SetUser(userId);
+            _authServiceMock
+                .Setup(x => x.DeactivateAccountAsync(userId))
+                .ThrowsAsync(new UserNotFound());
+
+            Func<Task> act = () => _controller.DeactivateAccount();
+            await act.Should().ThrowAsync<UserNotFound>();
+            _authServiceMock.Verify(
+                x => x.DeactivateAccountAsync(userId),
+                Times.Once);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccount_ServiceFails_PropagatesException()
+        {
+            int userId = 1;
+            SetUser(userId);
+            _authServiceMock
+                .Setup(x => x.DeactivateAccountAsync(userId))
+                .ThrowsAsync(new Exception("Database error"));
+
+            Func<Task> act = () => _controller.DeactivateAccount();
+            await act.Should()
+                .ThrowAsync<Exception>()
+                .WithMessage("Database error");
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccount_MissingUserIdClaim_ThrowsUnauthorizedAccessException()
+        {
+            var identity = new ClaimsIdentity(authenticationType: "TestAuthentication");
+            _controller.User = new ClaimsPrincipal(identity);
+            Func<Task> act = () => _controller.DeactivateAccount();
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+            _authServiceMock.Verify(
+                x => x.DeactivateAccountAsync(It.IsAny<int>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        public async Task DeactivateAccount_InvalidUserIdClaim_ThrowsUnauthorizedAccessException()
+        {
+            var identity = new ClaimsIdentity( new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, "invalid-id")
+                },
+                "TestAuthentication");
+
+            _controller.User = new ClaimsPrincipal(identity);
+            Func<Task> act = () => _controller.DeactivateAccount();
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+            _authServiceMock.Verify(
+                x => x.DeactivateAccountAsync(It.IsAny<int>()),
+                Times.Never);
         }
     }
 }

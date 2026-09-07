@@ -3,6 +3,7 @@ using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using System;
 using System.Data.Entity;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Repositories
@@ -31,6 +32,17 @@ namespace DotNetRestaurantManagement.Repositories
         public async Task DeleteAsync(RefreshToken refreshToken)
         {
             _context.RefreshTokens.Remove(refreshToken);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteByUserIdAsync(int userId)
+        {
+            var refreshTokens = await _context.RefreshTokens
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
+
+            _context.RefreshTokens.RemoveRange(refreshTokens);
+
             await _context.SaveChangesAsync();
         }
     }

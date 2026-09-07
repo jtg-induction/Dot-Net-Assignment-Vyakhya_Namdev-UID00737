@@ -8,5 +8,6 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         Task AddAsync(RefreshToken refreshToken);
         Task<RefreshToken> GetByTokenAsync(string token);
         Task DeleteAsync(RefreshToken refreshToken);
+        Task DeleteByUserIdAsync(int userId);
     }
 }

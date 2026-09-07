@@ -4,6 +4,8 @@ using DotNetRestaurantManagement.Repositories;
 using Effort;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -40,6 +42,12 @@ namespace DotNetRestaurantManagement.Tests.Repositories
                 Token = "refresh-token-123",
                 UserId = userId
             };
+        }
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            _context.Dispose();
         }
 
         [TestMethod]
@@ -173,6 +181,109 @@ namespace DotNetRestaurantManagement.Tests.Repositories
             RefreshToken remainingToken = await _repository.GetByTokenAsync("token-2");
             remainingToken.Should().NotBeNull();
             remainingToken.Token.Should().Be("token-2");
+        }
+
+        [TestMethod]
+        public async Task DeleteByUserIdAsync_UserHasRefreshTokens_DeletesAllUserTokens()
+        {
+            var user = new User
+            {
+                Name = "Test User",
+                Email = "test@example.com",
+                Password = "hashed-password",
+                PhoneNumber = "9876543210"
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            var token1 = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = "refresh-token-1",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var token2 = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = "refresh-token-2",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.RefreshTokens.Add(token1);
+            _context.RefreshTokens.Add(token2);
+            await _context.SaveChangesAsync();
+            await _repository.DeleteByUserIdAsync((int)user.Id);
+
+            var remainingTokens = await _context.RefreshTokens
+                .Where(x => x.UserId == user.Id)
+                .ToListAsync();
+
+            remainingTokens.Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public async Task DeleteByUserIdAsync_UserHasTokens_DoesNotDeleteOtherUsersTokens()
+        {
+            var user1 = new User
+            {
+                Name = "User One",
+                Email = "user1@example.com",
+                Password = "hashed-password",
+                PhoneNumber = "9876543210"
+            };
+
+            var user2 = new User
+            {
+                Name = "User Two",
+                Email = "user2@example.com",
+                Password = "hashed-password",
+                PhoneNumber = "9876543211"
+            };
+
+            _context.Users.Add(user1);
+            _context.Users.Add(user2);
+            await _context.SaveChangesAsync();
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                UserId = user1.Id,
+                Token = "user1-token",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                UserId = user2.Id,
+                Token = "user2-token",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            await _repository.DeleteByUserIdAsync((int)user1.Id);
+            var user1Tokens = await _context.RefreshTokens
+                .Where(x => x.UserId == user1.Id)
+                .ToListAsync();
+
+            var user2Tokens = await _context.RefreshTokens
+                .Where(x => x.UserId == user2.Id)
+                .ToListAsync();
+
+            user1Tokens.Should().BeEmpty();
+            user2Tokens.Should().HaveCount(1);
+            user2Tokens[0].Token.Should().Be("user2-token");
+        }
+
+        [TestMethod]
+        public async Task DeleteByUserIdAsync_UserHasNoRefreshTokens_DoesNotThrow()
+        {
+            int userId = 999;
+            Func<Task> act = () => _repository.DeleteByUserIdAsync(userId);
+            await act.Should().NotThrowAsync();
+            var tokens = await _context.RefreshTokens
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
+
+            tokens.Should().BeEmpty();
         }
     }
 }

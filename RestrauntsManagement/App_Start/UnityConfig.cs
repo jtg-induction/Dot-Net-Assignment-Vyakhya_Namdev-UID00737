@@ -31,6 +31,10 @@ namespace DotNetRestaurantManagement
             container.RegisterType<IAddressRepository, AddressRepository>();
             // Registers IRefreshTokenRepository with its concrete implementation.
             container.RegisterType<IRefreshTokenRepository, RefreshTokenRepository>();
+            // Registers RestaurantService
+            container.RegisterType<IRestaurantService, RestaurantService>();
+            // Registers Restaurants Repositories
+            container.RegisterType<IRestaurantRepository, RestaurantRepository>();
             // Sets Unity as the dependency resolver for Web API.
             GlobalConfiguration.Configuration.DependencyResolver = new UnityDependencyResolver(container);
         }

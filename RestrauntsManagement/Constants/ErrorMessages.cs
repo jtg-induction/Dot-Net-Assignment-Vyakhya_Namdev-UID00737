@@ -23,5 +23,7 @@
         public const string AccessDenied = "Access denied for this request!";
         public const string AddressNotFound = "Address not found!";
         public const string AccountDeactivated = "This account has been deactivated!";
+        public const string InvalidRestaurantId = "Invalid RestaurantId!";
+        public const string RestaurantNotFound = "Restaurant Not Found!";
     }
 }

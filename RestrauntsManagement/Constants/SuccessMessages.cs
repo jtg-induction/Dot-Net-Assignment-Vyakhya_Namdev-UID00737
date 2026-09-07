@@ -19,5 +19,7 @@ namespace DotNetRestaurantManagement.Constants
         public const string AddressFetched = "Address fetched Successfully!";
         public const string UserAddressFetched = "User Address fetched Successfully!";
         public const string RemovedAddress = "User Address removed Successfully!";
+        public const string RestaurantsListed = "Restaurants Listed Successfully!";
+        public const string RestaurantMenuListed = "Restaurant Menu Listed Successfully!";
     }
 }

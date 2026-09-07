@@ -17,5 +17,6 @@
         public const string PasswordUpdateValidation = "New password must be different from the current password!";
         public const string PhoneNumberAlreadyExists = "Phone Number already exists!";
         public const string PasswordMatchesError = "New Password should not be same as Current Password!";
+        public const string InvalidRefreshToken = "Invalid Refresh Token Provided!";
     }
 }

@@ -48,5 +48,17 @@ namespace DotNetRestaurantManagement.Controllers
             var response = await _userService.AddAddressAsync(userId, request);
             return Content(System.Net.HttpStatusCode.Created, response);
         }
+
+        /// Deactivates the user's account from all devices and market it as in-active user
+        [JwtAuthorize]
+        [HttpPut]
+        [Route("deactivate")]
+        public async Task<IHttpActionResult> DeactivateAccount()
+        {
+            long userId = ClaimsHelper.GetUserId(User);
+            long refreshTokenId = ClaimsHelper.GetRefreshTokenId(User);
+            await _userService.DeactivateAccountAsync(userId, refreshTokenId);
+            return Ok(true);
+        }
     }
 }

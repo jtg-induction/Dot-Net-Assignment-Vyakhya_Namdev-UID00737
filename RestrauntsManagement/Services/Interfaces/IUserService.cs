@@ -16,5 +16,7 @@ namespace DotNetRestaurantManagement.Services.Interfaces
         Task<AddressResponse> AddAddressAsync(
             long userId,
             AddressRequest request);
+
+        Task DeactivateAccountAsync(long userId, long refreshTokenId);
     }
 }

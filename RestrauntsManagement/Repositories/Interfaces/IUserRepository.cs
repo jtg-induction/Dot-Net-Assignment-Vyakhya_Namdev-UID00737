@@ -10,15 +10,10 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         void AddUser(User user);
         Task SaveChangesAsync();
         Task<User> GetByEmailAsync(string email);
-        Task<User> GetByIdAsync(int userId);
-        Task<bool> EmailExistsForOtherUserAsync(string email, int userId);
-        Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, int userId);
-        Task UpdateProfileAsync(
-            int userId,
-            string name,
-            string email,
-            string phoneNumber);
-        void AddAddress(Address address);
-        void AddUserAddress(UserAddress userAddress);
+        Task<User> GetByIdAsync(long userId);
+        Task<UserAddress> GetUserAddressAsync(long userId);
+        Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, long userId);
+        void AddUserAddress(Address address, UserAddress userAddress);
+        Task DeleteAllByUserIdAsync(long userId);
     }
 }

@@ -40,7 +40,7 @@ namespace DotNetRestaurantManagement.Filters
                 SecurityToken validatedToken;
 
                 var userInfo = tokenHandler.ValidateToken(
-                    cookie.Value,
+                    token,
                     new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,

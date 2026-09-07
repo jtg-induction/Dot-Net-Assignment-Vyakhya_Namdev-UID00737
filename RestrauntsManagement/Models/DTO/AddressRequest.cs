@@ -1,33 +1,36 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace DotNetRestaurantManagement.Models.DTO
 {
     public class AddressRequest
     {
         [Required]
-        [StringLength(50)]
+        [StringLength(ValidationConstants.HouseNumberMaxLength)]
         public string HouseNumber { get; set; }
 
         [Required]
-        [StringLength(255)]
+        [StringLength(ValidationConstants.MaxTextLength)]
         public string StreetAddress { get; set; }
 
         [Required]
-        [StringLength(100)]
+        [StringLength(ValidationConstants.MaxLocationLength)]
         public string City { get; set; }
 
         [Required]
-        [StringLength(100)]
+        [StringLength(ValidationConstants.MaxLocationLength)]
         public string State { get; set; }
 
         [Required]
-        [StringLength(6, MinimumLength = 6)]
+        [StringLength(ValidationConstants.PinCodeLength, MinimumLength = ValidationConstants.PinCodeLength)]
         public string PinCode { get; set; }
 
         [Required]
-        [StringLength(100)]
+        [StringLength(ValidationConstants.MaxLocationLength)]
         public string Country { get; set; }
 
+        [EnumDataType(typeof(AddressType))]
         public int AddressType { get; set; }
     }
 }

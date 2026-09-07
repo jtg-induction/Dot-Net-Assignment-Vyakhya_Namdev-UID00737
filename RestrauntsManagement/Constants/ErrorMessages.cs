@@ -14,5 +14,8 @@
         public const string RefreshTokenEmptyValidation = "Refresh token cannot be empty!";
         public const string InvalidCredentials = "Invalid Credentials Provided!";
         public const string UserNotFound = "User Not Found!";
+        public const string PasswordUpdateValidation = "New password must be different from the current password!";
+        public const string PhoneNumberAlreadyExists = "Phone Number already exists!";
+        public const string PasswordMatchesError = "New Password should not be same as Current Password!";
     }
 }

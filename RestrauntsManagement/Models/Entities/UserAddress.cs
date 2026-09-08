@@ -2,7 +2,6 @@
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("UserAddress")]
     public class UserAddress
     {
         public long UserId { get; set; }

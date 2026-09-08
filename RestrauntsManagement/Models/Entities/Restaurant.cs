@@ -1,4 +1,5 @@
-﻿using DotNetRestaurantManagement.Models.Enums;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -6,7 +7,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("Restaurants")]
     public class Restaurant
     {
         public Restaurant()
@@ -18,10 +18,15 @@ namespace DotNetRestaurantManagement.Models.Entities
         [Key]
         public long Id { get; set; }
 
+        [Required]
+        [MaxLength(ValidationConstants.MaxTextLength)]
+        [Index("Restaurants_Email", IsUnique = true)]
+        public string Email { get; set; }
+
         public long OwnerId { get; set; }
 
         [Required]
-        [MaxLength(150)]
+        [MaxLength(ValidationConstants.MaxNameLength)]
         public string Name { get; set; }
 
         public long AddressId { get; set; }

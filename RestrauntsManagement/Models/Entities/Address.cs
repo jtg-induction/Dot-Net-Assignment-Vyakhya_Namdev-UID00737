@@ -2,11 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using DotNetRestaurantManagement.Constants;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("Addresses")]
     public class Address
     {
         public Address()
@@ -20,31 +19,30 @@ namespace DotNetRestaurantManagement.Models.Entities
         public long Id { get; set; }
 
         [Required]
-        [MaxLength(50)]
+        [MaxLength(ValidationConstants.HouseNumberMaxLength)]
         public string HouseNumber { get; set; }
 
         [Required]
-        [MaxLength(255)]
+        [MaxLength(ValidationConstants.MaxTextLength)]
         public string StreetAddress { get; set; }
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(ValidationConstants.MaxLocationLength)]
         public string City { get; set; }
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(ValidationConstants.MaxLocationLength)]
         public string State { get; set; }
 
         [Required]
-        [StringLength(6, MinimumLength = 6)]
+        [StringLength(ValidationConstants.PinCodeLength, MinimumLength = ValidationConstants.PinCodeLength)]
         public string PinCode { get; set; }
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(ValidationConstants.MaxLocationLength)]
         public string Country { get; set; }
         public AddressType AddressType { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public virtual ICollection<UserAddress> UserAddresses { get; set; }
         public virtual ICollection<Restaurant> Restaurants { get; set; }
         public virtual ICollection<Order> Orders { get; set; }

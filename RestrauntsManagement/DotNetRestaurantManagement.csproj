@@ -131,21 +131,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Constants\ErrorMessages.cs" />
+    <Compile Include="Constants\RegexConstants.cs" />
+    <Compile Include="Constants\ValidationConstants.cs" />
     <Compile Include="Data\RestaurantDbContext.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\202607311545173_InitialDatabaseSetup.cs" />
-    <Compile Include="Migrations\202607311545173_InitialDatabaseSetup.Designer.cs">
-      <DependentUpon>202607311545173_InitialDatabaseSetup.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\202608031038533_UpdateEntityValidationAndModel.cs" />
-    <Compile Include="Migrations\202608031038533_UpdateEntityValidationAndModel.Designer.cs">
-      <DependentUpon>202608031038533_UpdateEntityValidationAndModel.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\202609051256405_ChangedOrderItemDatatype.cs" />
-    <Compile Include="Migrations\202609051256405_ChangedOrderItemDatatype.Designer.cs">
-      <DependentUpon>202609051256405_ChangedOrderItemDatatype.cs</DependentUpon>
+    <Compile Include="Migrations\202609080921464_InitialDatabaseSetup.cs" />
+    <Compile Include="Migrations\202609080921464_InitialDatabaseSetup.Designer.cs">
+      <DependentUpon>202609080921464_InitialDatabaseSetup.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\Entities\Address.cs" />
@@ -174,18 +169,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\202607311545173_InitialDatabaseSetup.resx">
-      <DependentUpon>202607311545173_InitialDatabaseSetup.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202608031038533_UpdateEntityValidationAndModel.resx">
-      <DependentUpon>202608031038533_UpdateEntityValidationAndModel.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202609051256405_ChangedOrderItemDatatype.resx">
-      <DependentUpon>202609051256405_ChangedOrderItemDatatype.cs</DependentUpon>
-    </EmbeddedResource>
+    <Content Include="connectionStrings.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <EmbeddedResource Include="Migrations\202609080921464_InitialDatabaseSetup.resx">
+      <DependentUpon>202609080921464_InitialDatabaseSetup.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

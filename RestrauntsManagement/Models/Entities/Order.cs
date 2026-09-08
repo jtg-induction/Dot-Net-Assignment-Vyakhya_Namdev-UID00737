@@ -4,10 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using DotNetRestaurantManagement.Constants;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("Orders")]
     public class Order
     {
         public Order()
@@ -27,16 +27,12 @@ namespace DotNetRestaurantManagement.Models.Entities
         [Range(1, long.MaxValue)]
         public long TotalItems { get; set; }
 
-        [Range(typeof(decimal), "50", "1000000")]
+        [Range(typeof(decimal), ValidationConstants.MinimumPrice, ValidationConstants.MaximumPrice)]
         public decimal TotalAmount { get; set; }
 
         public OrderStatus Status { get; set; }
 
-        public DateTime PlacedAt { get; set; } = DateTime.UtcNow;
-
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-        public DateTime? DeliveredAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public virtual Restaurant Restaurant { get; set; }
         public virtual User Customer { get; set; }
         public virtual Address DeliveryAddress { get; set; }

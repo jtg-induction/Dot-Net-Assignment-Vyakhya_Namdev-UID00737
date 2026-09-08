@@ -1,9 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using DotNetRestaurantManagement.Constants;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("OrderedItems")]
     public class OrderItem
     {
         [Key]
@@ -16,7 +16,7 @@ namespace DotNetRestaurantManagement.Models.Entities
         [Range(1, int.MaxValue)]
         public int Quantity { get; set; }
 
-        [Range(typeof(decimal), "50", "10000000")]
+        [Range(typeof(decimal), ValidationConstants.MinimumPrice, ValidationConstants.MaximumPrice)]
         public decimal Price { get; set; }
         public virtual MenuItem MenuItem { get; set; }
         public virtual Order Order { get; set; }

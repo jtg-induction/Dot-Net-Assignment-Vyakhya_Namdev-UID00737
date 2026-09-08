@@ -1,4 +1,5 @@
-﻿using DotNetRestaurantManagement.Models.Enums;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -6,7 +7,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("MenuItems")]
     public class MenuItem
     {
         public MenuItem()
@@ -22,7 +22,7 @@ namespace DotNetRestaurantManagement.Models.Entities
         [MaxLength(150)]
         public string Name { get; set; }
 
-        [Range(typeof(decimal), "50", "100000")]
+        [Range(typeof(decimal), ValidationConstants.MinimumPrice, ValidationConstants.MaximumPrice)]
         public decimal Price { get; set; }
 
         [Range(10, int.MaxValue)]

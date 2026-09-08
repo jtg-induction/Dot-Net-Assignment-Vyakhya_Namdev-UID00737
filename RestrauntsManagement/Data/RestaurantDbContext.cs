@@ -1,11 +1,12 @@
-﻿using System.Data.Entity;
-using DotNetRestaurantManagement.Models.Entities;
+﻿using DotNetRestaurantManagement.Models.Entities;
+using System.Configuration;
+using System.Data.Entity;
 
 namespace DotNetRestaurantManagement.Data
 {
     public class RestaurantDbContext : DbContext
     {
-        public RestaurantDbContext() : base("name=RestaurantDbContext")
+        public RestaurantDbContext() : base("name="+ConfigurationManager.AppSettings["DbConnectionName"])
         {
         }
         public DbSet<User> Users { get; set; }

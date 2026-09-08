@@ -1,22 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using DotNetRestaurantManagement.Constants;
+using System.ComponentModel.DataAnnotations;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("OrderedItems")]
     public class OrderItem
     {
         [Key]
         public int Id { get; set; }
-
+        [Required]
         public long MenuItemId { get; set; }
-
+        [Required]
         public long OrderId { get; set; }
-
-        [Range(1, int.MaxValue)]
+        [Required]
         public int Quantity { get; set; }
-
-        [Range(typeof(decimal), "50", "10000000")]
+        [Required]
         public decimal Price { get; set; }
         public virtual MenuItem MenuItem { get; set; }
         public virtual Order Order { get; set; }

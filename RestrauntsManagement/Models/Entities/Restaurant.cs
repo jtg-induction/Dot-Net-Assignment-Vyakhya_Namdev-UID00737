@@ -1,13 +1,12 @@
-﻿using DotNetRestaurantManagement.Models.Enums;
-using System;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.Enums;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("Restaurants")]
-    public class Restaurant
+    public class Restaurant : BaseEntity
     {
         public Restaurant()
         {
@@ -18,19 +17,21 @@ namespace DotNetRestaurantManagement.Models.Entities
         [Key]
         public long Id { get; set; }
 
+        [Required]
+        [MaxLength(ValidationConstants.MaxTextLength)]
+        [Index(IndexConstants.RestaurantEmailIndex, IsUnique = true)]
+        public string Email { get; set; }
+        [Required]
         public long OwnerId { get; set; }
 
         [Required]
-        [MaxLength(150)]
+        [MaxLength(ValidationConstants.MaxNameLength)]
         public string Name { get; set; }
-
+        [Required]
         public long AddressId { get; set; }
         public bool IsActive { get; set; } = true;
 
         public CuisineType Cuisine { get; set; }
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public virtual User Owner { get; set; }
         public virtual Address Address { get; set; }
 

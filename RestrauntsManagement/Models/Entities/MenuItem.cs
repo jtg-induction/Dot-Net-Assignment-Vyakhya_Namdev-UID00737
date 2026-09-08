@@ -1,13 +1,12 @@
-﻿using DotNetRestaurantManagement.Models.Enums;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DotNetRestaurantManagement.Models.Entities
 {
-    [Table("MenuItems")]
-    public class MenuItem
+    public class MenuItem : BaseEntity
     {
         public MenuItem()
         {
@@ -16,25 +15,21 @@ namespace DotNetRestaurantManagement.Models.Entities
 
         [Key]
         public long Id { get; set; }
+        [Required]
         public long RestaurantId { get; set; }
 
         [Required]
-        [MaxLength(150)]
+        [MaxLength(ValidationConstants.MaxNameLength)]
         public string Name { get; set; }
-
-        [Range(typeof(decimal), "50", "100000")]
+        [Required]
         public decimal Price { get; set; }
-
-        [Range(10, int.MaxValue)]
+        [Required]
         public int PreparationTime { get; set; }
-
         public MenuCategory Category { get; set; }
 
+        [Required]
         [Range(0, int.MaxValue)]
         public int QuantityAvailable { get; set; }
-
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         public virtual Restaurant Restaurant { get; set; }
 
         public virtual ICollection<OrderItem> OrderItems { get; set; }

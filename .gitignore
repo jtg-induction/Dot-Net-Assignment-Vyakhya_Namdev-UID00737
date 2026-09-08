@@ -14,3 +14,8 @@ packages/
 # User-specific files
 *.user
 *.suo
+connectionStrings.config
+secrets.config
+
+#Removing the data seeder project folder
+DataSeeder/

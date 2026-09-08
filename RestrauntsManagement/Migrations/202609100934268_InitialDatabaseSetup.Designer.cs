@@ -7,13 +7,13 @@ namespace DotNetRestaurantManagement.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.5.2")]
-    public sealed partial class UpdateEntityValidationAndModel : IMigrationMetadata
+    public sealed partial class InitialDatabaseSetup : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(UpdateEntityValidationAndModel));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(InitialDatabaseSetup));
         
         string IMigrationMetadata.Id
         {
-            get { return "202608031038533_UpdateEntityValidationAndModel"; }
+            get { return "202609100934268_InitialDatabaseSetup"; }
         }
         
         string IMigrationMetadata.Source

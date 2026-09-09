@@ -216,6 +216,7 @@
     <Compile Include="Constants\ErrorMessages.cs" />
     <Compile Include="Constants\RegexConstants.cs" />
     <Compile Include="Constants\ValidationConstants.cs" />
+    <Compile Include="Controllers\RestaurantController.cs" />
     <Compile Include="Data\RestaurantDbContext.cs" />
     <Compile Include="Exceptions\DuplicateEmailException.cs" />
     <Compile Include="Exceptions\DuplicatePhoneNumberException.cs" />
@@ -236,7 +237,7 @@
     <Compile Include="Migrations\202609080921464_InitialDatabaseSetup.Designer.cs">
       <DependentUpon>202609080921464_InitialDatabaseSetup.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Helpers\PaginationHelper.cs" />
     <Compile Include="Migrations\202609081543009_AddRefreshTokenTable.cs" />
     <Compile Include="Migrations\202609081543009_AddRefreshTokenTable.Designer.cs">
       <DependentUpon>202609081543009_AddRefreshTokenTable.cs</DependentUpon>
@@ -245,8 +246,13 @@
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Models\DTO\AddressRequest.cs" />
     <Compile Include="Models\DTO\AddressResponse.cs" />
+    <Compile Include="Models\DTO\BrowseRestaurant.cs" />
     <Compile Include="Models\DTO\ChangePasswordRequest.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
+    <Compile Include="Models\DTO\MenuItemDto.cs" />
+    <Compile Include="Models\DTO\PaginationRequest.cs" />
+    <Compile Include="Models\DTO\PaginationResult.cs" />
+    <Compile Include="Models\DTO\RestaurantDto.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />
     <Compile Include="Models\DTO\SignupResponse.cs" />
     <Compile Include="Models\DTO\LoginRequest.cs" />
@@ -264,10 +270,13 @@
     <Compile Include="Models\Enums\MenuCategory.cs" />
     <Compile Include="Models\Enums\OrderStatus.cs" />
     <Compile Include="Models\Enums\UserRole.cs" />
+    <Compile Include="Repositories\Implementations\RestaurantRepository.cs" />
+    <Compile Include="Repositories\Interfaces\IRestaurantRepository.cs" />
     <Compile Include="Repositories\Interfaces\IUserRepository.cs" />
     <Compile Include="Repositories\Implementations\UserRepository.cs" />
     <Compile Include="Services\Implementations\AuthService.cs" />
     <Compile Include="Services\Implementations\PasswordHasher.cs" />
+    <Compile Include="Services\Implementations\RestaurantService.cs" />
     <Compile Include="Services\Interfaces\IAuthService.cs" />
     <Compile Include="Services\Interfaces\IPasswordHasher.cs" />
     <Compile Include="Filters\JwtAuthorizeAttribute.cs" />
@@ -278,6 +287,7 @@
     <Compile Include="Repositories\Implementations\RefreshTokenRepository.cs" />
     <Compile Include="Services\Interfaces\IJwtService.cs" />
     <Compile Include="Services\Implementations\JwtService.cs" />
+    <Compile Include="Services\Interfaces\IRestaurantService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="favicon.ico" />

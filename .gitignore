@@ -1,0 +1,21 @@
+# Visual Studio files
+.vs/
+
+# Build output
+bin/
+obj/
+
+# NuGet packages
+packages/
+
+# Logs
+*.log
+
+# User-specific files
+*.user
+*.suo
+connectionStrings.config
+secrets.config
+
+#Removing the data seeder project folder
+DataSeeder/

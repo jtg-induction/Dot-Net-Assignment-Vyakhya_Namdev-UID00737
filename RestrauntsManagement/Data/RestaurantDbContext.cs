@@ -32,7 +32,7 @@ namespace DotNetRestaurantManagement.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderedItems { get; set; }
         public DbSet<UserAddress> UserAddresses { get; set; }
-
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         /// <summary>
         /// Saves all changes to the database and automatically sets the creation and update timestamps for tracked entities.
         /// </summary>
@@ -127,6 +127,11 @@ namespace DotNetRestaurantManagement.Data
                 .WithMany(x => x.OrderItems)
                 .HasForeignKey(x => x.MenuItemId)
                 .WillCascadeOnDelete(false);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasRequired(rt => rt.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(rt => rt.UserId);
 
             base.OnModelCreating(modelBuilder);
         }

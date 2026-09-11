@@ -9,5 +9,10 @@
         public const string UnexpectedError = "An unexpected error occurred!";
         public const string DuplicateEmailException = "Email already exists!";
         public const string DuplicatePhoneNumberException = "Phone number already exists!";
+        public const string UserIdMissingClaim = "User ID claim is missing or invalid!";
+        public const string RefreshTokenIdMissingClaim = "Refresh token ID claim is missing or invalid!";
+        public const string RefreshTokenEmptyValidation = "Refresh token cannot be empty!";
+        public const string InvalidCredentials = "Invalid Credentials Provided!";
+        public const string UserNotFound = "User Not Found!";
     }
 }

@@ -4,11 +4,12 @@ using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Implementations;
-using DotNetRestaurantManagement.Services.Interfaces;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using System;
+using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Tests.Services
@@ -17,25 +18,25 @@ namespace DotNetRestaurantManagement.Tests.Services
     public class AuthServiceTests
     {
         private Mock<IUserRepository> _userRepositoryMock;
-        private Mock<IPasswordHasher> _passwordHasherMock;
+        private Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock;
         private AuthService _authService;
 
         [TestInitialize]
         public void Setup()
         {
             _userRepositoryMock = new Mock<IUserRepository>();
-            _passwordHasherMock = new Mock<IPasswordHasher>();
+            _refreshTokenRepositoryMock = new Mock<IRefreshTokenRepository>();
             _authService = new AuthService(
                 _userRepositoryMock.Object,
-                _passwordHasherMock.Object);
+                _refreshTokenRepositoryMock.Object);
         }
 
-        private SignupRequest GetValidRequest()
+        private SignupRequest GetValidSignupRequest()
         {
             return new SignupRequest
             {
                 Name = "Vyakhya Namdev",
-                Email = "vyakhyanamdev@test.com",
+                Email = " VyakhyaNamdev@Test.com ",
                 Password = "vyakhya@123",
                 PhoneNumber = " 9876543210 ",
                 HouseNumber = "12A",
@@ -48,207 +49,525 @@ namespace DotNetRestaurantManagement.Tests.Services
             };
         }
 
-        /// <summary>
-        /// Verifies that Signup throws an ArgumentNullException when the signup request is null.
-        /// </summary>
+        private User CreateActiveUser()
+        {
+            return new User
+            {
+                Id = 1,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhyanamdev@test.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("vyakhya@123"),
+                PhoneNumber = "9876543210",
+                IsActive = true,
+                Role = UserRole.Customer
+            };
+        }
+
+        private RefreshToken CreateValidRefreshToken(User user, string refreshToken)
+        {
+            return new RefreshToken
+            {
+                Id = 10,
+                UserId = user.Id,
+                Token = DotNetRestaurantManagement.Helpers.TokenHelper.Hash(refreshToken),
+                CreatedAt = DateTime.UtcNow.AddDays(-1),
+                User = user
+            };
+        }
+
         [TestMethod]
+        [Description("Verifies that Signup throws an ArgumentNullException when the signup request is null.")]
         public async Task Signup_NullRequest_ThrowsArgumentNullException()
         {
             Func<Task> action = () => _authService.Signup(null);
             await action.Should().ThrowAsync<ArgumentNullException>();
         }
 
-        /// <summary>
-        /// Verifies that Signup throws a DuplicateEmailException when the email is already registered.
-        /// </summary>
         [TestMethod]
-        public async Task Signup_EmailAlreadyExists_ThrowsDuplicateEmailException()
+        [Description("Verifies that Signup throws a conflict exception when the email is already registered.")]
+        public async Task Signup_EmailAlreadyExists_ThrowsConflictException()
         {
-            var request = GetValidRequest();
+            var request = GetValidSignupRequest();
+
             _userRepositoryMock
-                .Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
+                .Setup(x => x.EmailExistsAsync("vyakhyanamdev@test.com"))
                 .ReturnsAsync(true);
+
             Func<Task> action = () => _authService.Signup(request);
-            await action.Should().ThrowAsync<DuplicateEmailException>().WithMessage("User with this email already exists!");
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Conflict);
+
             _userRepositoryMock.Verify(
                 x => x.EmailExistsAsync("vyakhyanamdev@test.com"),
                 Times.Once);
+
             _userRepositoryMock.Verify(
                 x => x.AddUser(It.IsAny<User>()),
                 Times.Never);
         }
 
-        /// <summary>
-        /// Verifies that Signup throws a DuplicatePhoneNumberException when the phone number is already registered.
-        /// </summary>
         [TestMethod]
-        public async Task Signup_PhoneAlreadyExists_ThrowsDuplicatePhoneNumberException()
+        [Description("Verifies that Signup throws a conflict exception when the phone number is already registered.")]
+        public async Task Signup_PhoneNumberAlreadyExists_ThrowsConflictException()
         {
-            var request = GetValidRequest();
+            var request = GetValidSignupRequest();
             _userRepositoryMock
-                .Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
+                .Setup(x => x.EmailExistsAsync("vyakhyanamdev@test.com"))
                 .ReturnsAsync(false);
+
             _userRepositoryMock
-                .Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
+                .Setup(x => x.PhoneNumberExistsAsync("9876543210"))
                 .ReturnsAsync(true);
+
             Func<Task> action = () => _authService.Signup(request);
-            await action.Should().ThrowAsync<DuplicatePhoneNumberException>().WithMessage("User with this phone number already exists!");
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Conflict);
+
+            _userRepositoryMock.Verify(
+                x => x.PhoneNumberExistsAsync("9876543210"),
+                Times.Once);
+
             _userRepositoryMock.Verify(
                 x => x.AddUser(It.IsAny<User>()),
                 Times.Never);
         }
 
-        /// <summary>
-        /// Verifies that Signup returns the expected response for a valid signup request.
-        /// </summary>
         [TestMethod]
+        [Description("Verifies that Signup creates a customer account and returns the expected signup response for a valid request.")]
         public async Task Signup_ValidRequest_ReturnsSignupResponse()
         {
-            var request = GetValidRequest();
+            var request = GetValidSignupRequest();
             _userRepositoryMock
-                .Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
+                .Setup(x => x.EmailExistsAsync("vyakhyanamdev@test.com"))
                 .ReturnsAsync(false);
+
             _userRepositoryMock
-                .Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
+                .Setup(x => x.PhoneNumberExistsAsync("9876543210"))
                 .ReturnsAsync(false);
-            _passwordHasherMock
-                .Setup(x => x.Hash(It.IsAny<string>()))
-                .Returns("HASHED_PASSWORD");
+
+            _userRepositoryMock
+                .Setup(x => x.AddUser(It.IsAny<User>()))
+                .Callback<User>(user => user.Id = 1);
+
             var response = await _authService.Signup(request);
             response.Should().NotBeNull();
+            response.UserId.Should().Be(1);
             response.Name.Should().Be("Vyakhya Namdev");
             response.Email.Should().Be("vyakhyanamdev@test.com");
-            response.Role.Should().Be("Customer");
+            response.Role.Should().Be(UserRole.Customer.ToString());
             response.Balance.Should().Be(1000);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Once);
         }
 
-        /// <summary>
-        /// Verifies that the user's password is hashed before the user is saved.
-        /// </summary>
         [TestMethod]
-        public async Task Signup_HashesPasswordBeforeSaving()
+        [Description("Verifies that Signup normalizes the email and trims the phone number before saving the user.")]
+        public async Task Signup_NormalizesUserDataBeforeSaving()
         {
-            var request = GetValidRequest();
+            var request = GetValidSignupRequest();
             User savedUser = null;
+
+            _userRepositoryMock
+                .Setup(x => x.EmailExistsAsync("vyakhyanamdev@test.com"))
+                .ReturnsAsync(false);
+
+            _userRepositoryMock
+                .Setup(x => x.PhoneNumberExistsAsync("9876543210"))
+                .ReturnsAsync(false);
+
+            _userRepositoryMock
+                .Setup(x => x.AddUser(It.IsAny<User>()))
+                .Callback<User>(user =>
+                {
+                    savedUser = user;
+                    user.Id = 1;
+                });
+
+            await _authService.Signup(request);
+            savedUser.Should().NotBeNull();
+            savedUser.Email.Should().Be("vyakhyanamdev@test.com");
+            savedUser.PhoneNumber.Should().Be("9876543210");
+            savedUser.Name.Should().Be("Vyakhya Namdev");
+        }
+
+        [TestMethod]
+        [Description("Verifies that Signup hashes the password and does not store the plain-text password.")]
+        public async Task Signup_ValidRequest_HashesPassword()
+        {
+            var request = GetValidSignupRequest();
+            User savedUser = null;
+
             _userRepositoryMock
                 .Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
                 .ReturnsAsync(false);
+
             _userRepositoryMock
                 .Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
                 .ReturnsAsync(false);
-            _passwordHasherMock
-                .Setup(x => x.Hash(request.Password))
-                .Returns("HASHED_PASSWORD");
+
             _userRepositoryMock
                 .Setup(x => x.AddUser(It.IsAny<User>()))
-                .Callback<User>(u => savedUser = u);
+                .Callback<User>(user =>
+                {
+                    savedUser = user;
+                    user.Id = 1;
+                });
+
             await _authService.Signup(request);
             savedUser.Should().NotBeNull();
-            savedUser.Password.Should().Be("HASHED_PASSWORD");
+            savedUser.Password.Should().NotBe(request.Password);
+            BCrypt.Net.BCrypt.Verify(
+                request.Password,
+                savedUser.Password).Should().BeTrue();
         }
 
-        /// <summary>
-        /// Verifies that the email is normalized before the user is saved.
-        /// </summary>
         [TestMethod]
-        public async Task Signup_NormalizesEmailBeforeSaving()
+        [Description("Verifies that Signup assigns the Customer role and creates an active home address mapping for the new user.")]
+        public async Task Signup_ValidRequest_CreatesCustomerAndUserAddress()
         {
-            var request = GetValidRequest();
+            var request = GetValidSignupRequest();
             User savedUser = null;
-            _userRepositoryMock.Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _userRepositoryMock.Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _passwordHasherMock.Setup(x => x.Hash(It.IsAny<string>()))
-                .Returns("HASHED_PASSWORD");
-            _userRepositoryMock
-                .Setup(x => x.AddUser(It.IsAny<User>()))
-                .Callback<User>(u => savedUser = u);
-            await _authService.Signup(request);
-            savedUser.Email.Should().Be("vyakhyanamdev@test.com");
-        }
 
-        /// <summary>
-        /// Verifies that leading and trailing spaces are removed from the phone number before saving.
-        /// </summary>
-        [TestMethod]
-        public async Task Signup_TrimsPhoneNumber()
-        {
-            var request = GetValidRequest();
-            User savedUser = null;
-            _userRepositoryMock.Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _userRepositoryMock.Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _passwordHasherMock.Setup(x => x.Hash(It.IsAny<string>()))
-                .Returns("HASHED_PASSWORD");
             _userRepositoryMock
-                .Setup(x => x.AddUser(It.IsAny<User>()))
-                .Callback<User>(u => savedUser = u);
-            await _authService.Signup(request);
-            savedUser.PhoneNumber.Should().Be("9876543210");
-        }
+                .Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
+                .ReturnsAsync(false);
 
-        /// <summary>
-        /// Verifies that a newly registered user is assigned the Customer role.
-        /// </summary>
-        [TestMethod]
-        public async Task Signup_AssignsCustomerRole()
-        {
-            var request = GetValidRequest();
-            User savedUser = null;
-            _userRepositoryMock.Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
+            _userRepositoryMock
+                .Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
                 .ReturnsAsync(false);
-            _userRepositoryMock.Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _passwordHasherMock.Setup(x => x.Hash(It.IsAny<string>()))
-                .Returns("HASHED_PASSWORD");
+
             _userRepositoryMock
                 .Setup(x => x.AddUser(It.IsAny<User>()))
-                .Callback<User>(u => savedUser = u);
+                .Callback<User>(user =>
+                {
+                    savedUser = user;
+                    user.Id = 1;
+                });
+
             await _authService.Signup(request);
+            savedUser.Should().NotBeNull();
             savedUser.Role.Should().Be(UserRole.Customer);
-        }
-
-        /// <summary>
-        /// Verifies that a UserAddress is created for the newly registered user.
-        /// </summary>
-        [TestMethod]
-        public async Task Signup_CreatesUserAddress()
-        {
-            var request = GetValidRequest();
-            User savedUser = null;
-            _userRepositoryMock.Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _userRepositoryMock.Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _passwordHasherMock.Setup(x => x.Hash(It.IsAny<string>()))
-                .Returns("HASHED_PASSWORD");
-            _userRepositoryMock
-                .Setup(x => x.AddUser(It.IsAny<User>()))
-                .Callback<User>(u => savedUser = u);
-            await _authService.Signup(request);
             savedUser.UserAddresses.Should().HaveCount(1);
+            savedUser.UserAddresses.First().Address.AddressType.Should().Be(AddressType.Home);
         }
 
-        /// <summary>
-        /// Verifies that an exception thrown while saving changes is propagated to the caller.
-        /// </summary>
         [TestMethod]
-        public async Task Signup_SaveChangesThrows_ExceptionPropagates()
+        [Description("Verifies that Login returns access and refresh tokens for valid credentials and stores the refresh token.")]
+        public async Task LoginAsync_ValidCredentials_ReturnsLoginResponse()
         {
-            var request = GetValidRequest();
-            _userRepositoryMock.Setup(x => x.EmailExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _userRepositoryMock.Setup(x => x.PhoneNumberExistsAsync(It.IsAny<string>()))
-                .ReturnsAsync(false);
-            _passwordHasherMock.Setup(x => x.Hash(It.IsAny<string>()))
-                .Returns("HASHED_PASSWORD");
+            var user = CreateActiveUser();
+            var request = new LoginRequest
+            {
+                Email = user.Email,
+                Password = "vyakhya@123"
+            };
+
             _userRepositoryMock
-                .Setup(x => x.SaveChanges())
-                .ThrowsAsync(new Exception("Database Error"));
-            Func<Task> action = () => _authService.Signup(request);
-            await action.Should().ThrowAsync<Exception>().WithMessage("Database Error");
+                .Setup(x => x.GetByEmailAsync(user.Email))
+                .ReturnsAsync(user);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.Add(It.IsAny<RefreshToken>()))
+                .Callback<RefreshToken>(token => token.Id = 10)
+                .Returns(Task.CompletedTask);
+
+            var result = await _authService.LoginAsync(request);
+            result.Should().NotBeNull();
+            result.Name.Should().Be(user.Name);
+            result.Email.Should().Be(user.Email);
+            result.AccessToken.Should().NotBeNullOrWhiteSpace();
+            result.RefreshToken.Should().NotBeNullOrWhiteSpace();
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Add(It.Is<RefreshToken>(
+                    token =>
+                        token.UserId == user.Id &&
+                        token.Id == 10 &&
+                        !string.IsNullOrWhiteSpace(token.Token))),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Exactly(2));
+        }
+
+        [TestMethod]
+        [Description("Verifies that Login rejects the request when no user exists with the provided email.")]
+        public async Task LoginAsync_UserNotFound_ThrowsInvalidCredentials()
+        {
+            var request = new LoginRequest
+            {
+                Email = "unknown@test.com",
+                Password = "vyakhya@123"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByEmailAsync("unknown@test.com"))
+                .ReturnsAsync((User)null);
+
+            Func<Task> action = () => _authService.LoginAsync(request);
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Add(It.IsAny<RefreshToken>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that Login rejects the request when the provided password does not match the stored password.")]
+        public async Task LoginAsync_WrongPassword_ThrowsInvalidCredentials()
+        {
+            var user = CreateActiveUser();
+            var request = new LoginRequest
+            {
+                Email = user.Email,
+                Password = "WrongPassword"
+            };
+
+            _userRepositoryMock
+                .Setup(x => x.GetByEmailAsync(user.Email))
+                .ReturnsAsync(user);
+
+            Func<Task> action = () => _authService.LoginAsync(request);
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Add(It.IsAny<RefreshToken>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that Login generates a refresh token linked to the authenticated user.")]
+        public async Task LoginAsync_ValidCredentials_CreatesRefreshTokenForUser()
+        {
+            var user = CreateActiveUser();
+            var request = new LoginRequest
+            {
+                Email = user.Email,
+                Password = "vyakhya@123"
+            };
+
+            RefreshToken savedToken = null;
+            _userRepositoryMock
+                .Setup(x => x.GetByEmailAsync(user.Email))
+                .ReturnsAsync(user);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.Add(It.IsAny<RefreshToken>()))
+                .Callback<RefreshToken>(token =>
+                {
+                    savedToken = token;
+                    token.Id = 10;
+                })
+                .Returns(Task.CompletedTask);
+
+            await _authService.LoginAsync(request);
+            savedToken.Should().NotBeNull();
+            savedToken.UserId.Should().Be(user.Id);
+            savedToken.Token.Should().NotBeNullOrWhiteSpace();
+            savedToken.Token.Should().HaveLength(64);
+        }
+
+        [TestMethod]
+        [Description("Verifies that a valid refresh token generates a new access token and refresh token and removes the old token.")]
+        public async Task RefreshTokenAsync_ValidToken_RotatesTokens()
+        {
+            var user = CreateActiveUser();
+            const string refreshToken = "valid-refresh-token";
+            var existingToken = CreateValidRefreshToken(user, refreshToken);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByTokenAsync(
+                    DotNetRestaurantManagement.Helpers.TokenHelper.Hash(refreshToken)))
+                .ReturnsAsync(existingToken);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.Add(It.IsAny<RefreshToken>()))
+                .Callback<RefreshToken>(token => token.Id = 20)
+                .Returns(Task.CompletedTask);
+
+            var result = await _authService.RefreshTokenAsync(refreshToken);
+            result.Should().NotBeNull();
+            result.AccessToken.Should().NotBeNullOrWhiteSpace();
+            result.RefreshToken.Should().NotBeNullOrWhiteSpace();
+            result.RefreshToken.Should().NotBe(refreshToken);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(existingToken),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Exactly(2));
+        }
+
+        [TestMethod]
+        [Description("Verifies that RefreshToken rejects a token that does not exist in the database.")]
+        public async Task RefreshTokenAsync_TokenNotFound_ThrowsInvalidCredentials()
+        {
+            const string refreshToken = "invalid-refresh-token";
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByTokenAsync(
+                    DotNetRestaurantManagement.Helpers.TokenHelper.Hash(refreshToken)))
+                .ReturnsAsync((RefreshToken)null);
+
+            Func<Task> action = () => _authService.RefreshTokenAsync(refreshToken);
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that RefreshToken rejects an expired refresh token.")]
+        public async Task RefreshTokenAsync_ExpiredToken_ThrowsInvalidCredentials()
+        {
+            var user = CreateActiveUser();
+            const string refreshToken = "expired-refresh-token";
+            var existingToken = CreateValidRefreshToken(user, refreshToken);
+            existingToken.CreatedAt = DateTime.UtcNow.AddDays(-8);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByTokenAsync(
+                    DotNetRestaurantManagement.Helpers.TokenHelper.Hash(refreshToken)))
+                .ReturnsAsync(existingToken);
+
+            Func<Task> action = () => _authService.RefreshTokenAsync(refreshToken);
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Add(It.IsAny<RefreshToken>()),
+                Times.Never);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that RefreshToken creates a new refresh token for the same user during token rotation.")]
+        public async Task RefreshTokenAsync_ValidToken_CreatesNewRefreshToken()
+        {
+            var user = CreateActiveUser();
+            const string refreshToken = "old-refresh-token";
+            var existingToken = CreateValidRefreshToken(user, refreshToken);
+            RefreshToken newToken = null;
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByTokenAsync(
+                    DotNetRestaurantManagement.Helpers.TokenHelper.Hash(refreshToken)))
+                .ReturnsAsync(existingToken);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.Add(It.IsAny<RefreshToken>()))
+                .Callback<RefreshToken>(token =>
+                {
+                    newToken = token;
+                    token.Id = 20;
+                })
+                .Returns(Task.CompletedTask);
+
+            await _authService.RefreshTokenAsync(refreshToken);
+
+            newToken.Should().NotBeNull();
+            newToken.UserId.Should().Be(user.Id);
+            newToken.Token.Should().NotBeNullOrWhiteSpace();
+            newToken.Token.Should().HaveLength(64);
+            newToken.Token.Should().NotBe(existingToken.Token);
+        }
+
+        [TestMethod]
+        [Description("Verifies that Logout deletes the refresh token associated with the authenticated user and refresh token ID.")]
+        public async Task LogoutAsync_ValidUserAndRefreshToken_DeletesToken()
+        {
+            const long userId = 1;
+            const long refreshTokenId = 10;
+
+            var refreshToken = new RefreshToken
+            {
+                Id = refreshTokenId,
+                UserId = userId,
+                Token = "refresh-token-hash",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByIdAsync(refreshTokenId))
+                .ReturnsAsync(refreshToken);
+
+            await _authService.LogoutAsync(userId, refreshTokenId);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(refreshTokenId),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(refreshToken),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies that Logout rejects the request when the refresh token ID does not exist.")]
+        public async Task LogoutAsync_RefreshTokenNotFound_ThrowsInvalidCredentials()
+        {
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByIdAsync(10))
+                .ReturnsAsync((RefreshToken)null);
+
+            Func<Task> action = () => _authService.LogoutAsync(1, 10);
+
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that Logout rejects an invalid user ID without querying the refresh token repository.")]
+        public async Task LogoutAsync_InvalidUserId_ThrowsInvalidCredentials()
+        {
+            Func<Task> action = () => _authService.LogoutAsync(0, 10);
+
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(It.IsAny<long>()),
+                Times.Never);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that Logout rejects an invalid refresh token ID without querying the refresh token repository.")]
+        public async Task LogoutAsync_InvalidRefreshTokenId_ThrowsInvalidCredentials()
+        {
+            Func<Task> action = () => _authService.LogoutAsync(1, 0);
+
+            var exception = await action.Should().ThrowAsync<ApiException>();
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(It.IsAny<long>()),
+                Times.Never);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
         }
     }
 }

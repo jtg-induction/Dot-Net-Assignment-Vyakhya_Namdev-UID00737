@@ -15,9 +15,11 @@ namespace DotNetRestaurantManagement.Services.Implementations
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
-        public AuthService(IUserRepository userRepository)
-        {
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
+
+        public AuthService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository){
             _userRepository = userRepository;
+            _refreshTokenRepository = refreshTokenRepository;
         }
         public async Task<SignupResponse> Signup(SignupRequest request)
         {
@@ -72,6 +74,83 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 Role = user.Role.ToString(),
                 Balance = user.Balance
             };
+        }
+
+        public async Task<LoginResponse> LoginAsync(LoginRequest request)
+        {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            string normalizedEmail = request.Email.Trim().ToLowerInvariant();
+            var user = await _userRepository.GetByEmailAsync(normalizedEmail);
+            if (user == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            bool isValidPassword = PasswordHashingHelper.Verify(
+                request.Password,
+                user.Password);
+
+            if (!isValidPassword) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (!user.IsActive) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
+            string refreshToken = TokenHelper.GenerateRefreshToken();
+            string refreshTokenHash = TokenHelper.Hash(refreshToken);
+            var refreshTokenEntity = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = refreshTokenHash
+            };
+
+            await _refreshTokenRepository.Add(refreshTokenEntity);
+            await _refreshTokenRepository.SaveChangesAsync();
+            string accessToken = TokenHelper.GenerateAccessToken(
+                user,
+                refreshTokenEntity.Id);
+            return new LoginResponse
+            {
+                Name = user.Name,
+                Email = user.Email,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+        }
+
+        public async Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken)) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            string refreshTokenHash = TokenHelper.Hash(refreshToken);
+            var existingToken = await _refreshTokenRepository.GetByTokenAsync(refreshTokenHash);
+            if (existingToken == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (existingToken.CreatedAt.AddDays(ValidationConstants.RefreshTokenExpiryDays) <= DateTime.UtcNow)
+            {
+                throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            }
+
+            var user = existingToken.User;
+            if (user == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (!user.IsActive) throw new ApiException( HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
+            string newRefreshToken = TokenHelper.GenerateRefreshToken();
+            string newRefreshTokenHash = TokenHelper.Hash(newRefreshToken);
+            var newToken = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = newRefreshTokenHash
+            };
+
+            await _refreshTokenRepository.Add(newToken);
+            await _refreshTokenRepository.Delete(existingToken);
+            await _refreshTokenRepository.SaveChangesAsync();
+            string newAccessToken = TokenHelper.GenerateAccessToken(user, newToken.Id);
+            return new RefreshTokenResponse
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            };
+        }
+
+        public async Task LogoutAsync(long userId, long refreshTokenId)
+        {
+            if (userId <= 0 || refreshTokenId <= 0) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            var existingToken = await _refreshTokenRepository.GetByIdAsync(refreshTokenId);
+            if (existingToken == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            if (existingToken.UserId != userId) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
+            await _refreshTokenRepository.Delete(existingToken);
+            await _refreshTokenRepository.SaveChangesAsync();
         }
     }
 }

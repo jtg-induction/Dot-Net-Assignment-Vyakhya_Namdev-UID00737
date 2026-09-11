@@ -5,6 +5,7 @@ using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Services.Interfaces;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace DotNetRestaurantManagement.Controllers
         [Route("signup")]
         public async Task<IHttpActionResult> Signup(SignupRequest request){
             SignupResponse response = await _authService.Signup(request);
-            return Content(HttpStatusCode.Created, response);
+            return Ok(new ApiResponse<SignupResponse>(true, response));
         }
 
         /// <summary>
@@ -45,13 +46,7 @@ namespace DotNetRestaurantManagement.Controllers
         public async Task<IHttpActionResult> Login(LoginRequest request)
         {
             var response = await _authService.LoginAsync(request);
-            return Ok(new
-            {
-                response.Name,
-                response.Email,
-                response.AccessToken,
-                response.RefreshToken
-            });
+            return Ok(new ApiResponse<LoginResponse>(true,response));
         }
 
         /// Generates new access and refresh tokens using the refresh token cookie.
@@ -66,11 +61,7 @@ namespace DotNetRestaurantManagement.Controllers
             }
 
             var response = await _authService.RefreshTokenAsync(request.RefreshToken);
-            return Ok(new
-            {
-                response.AccessToken,
-                response.RefreshToken
-            });
+            return Ok(new ApiResponse<RefreshTokenResponse>(true,response));
         }
 
         /// Logs out the current user and removes the authentication cookies.
@@ -84,10 +75,7 @@ namespace DotNetRestaurantManagement.Controllers
             var refreshTokenId = ClaimsHelper.GetRefreshTokenId(User);
             await _authService.LogoutAsync(userId, refreshTokenId);
 
-            return Ok(new
-            {
-                Message = StringConstants.LogoutSuccessMessage
-            });
+            return Ok(true);
         }
     }
 }

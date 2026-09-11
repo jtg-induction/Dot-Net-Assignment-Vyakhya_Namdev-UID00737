@@ -5,6 +5,7 @@ using Effort;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -210,5 +211,220 @@ namespace DotNetRestaurantManagement.Tests.Repositories
             result.Name.Should().Be("Vyakhya");
             result.Email.Should().Be("vyakhya@test.com");
         }
+
+        [TestMethod]
+        [Description("Verifies that phone number exists when it belongs to another user.")]
+        public async Task PhoneNumberExistsForOtherUserAsync_WhenPhoneBelongsToOtherUser_ShouldReturnTrue()
+        {
+            var user1 = CreateUser();
+            var user2 = CreateUser();
+            user2.Email = "user2@test.com";
+            user2.PhoneNumber = "9999999999";
+
+            _context.Users.Add(user1);
+            _context.Users.Add(user2);
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.PhoneNumberExistsForOtherUserAsync(
+                "9999999999",
+                (int)user1.Id);
+
+            result.Should().BeTrue();
+        }
+
+        [TestMethod]
+        [Description("Verifies that phone number does not exist for the same user.")]
+        public async Task PhoneNumberExistsForOtherUserAsync_WhenPhoneBelongsToSameUser_ShouldReturnFalse()
+        {
+            var user = CreateUser();
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.PhoneNumberExistsForOtherUserAsync(
+                user.PhoneNumber,
+                (int)user.Id);
+
+            result.Should().BeFalse();
+        }
+
+        [TestMethod]
+        [Description("Verifies that phone number does not exist when no user has it.")]
+        public async Task PhoneNumberExistsForOtherUserAsync_WhenPhoneDoesNotExist_ShouldReturnFalse()
+        {
+            var user = CreateUser();
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.PhoneNumberExistsForOtherUserAsync(
+                "9999999999",
+                (int)user.Id);
+
+            result.Should().BeFalse();
+        }
+
+        [TestMethod]
+        [Description("Verifies that active user address is returned with its address details.")]
+        public async Task GetUserAddressAsync_WhenActiveAddressExists_ShouldReturnUserAddress()
+        {
+            var user = CreateUser();
+            var address = new Address
+            {
+                HouseNumber = "12A",
+                StreetAddress = "MG Road",
+                City = "Noida",
+                State = "Uttar Pradesh",
+                PinCode = "110001",
+                Country = "India"
+            };
+
+            _context.Users.Add(user);
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+
+            var userAddress = new UserAddress
+            {
+                UserId = user.Id,
+                AddressId = address.Id,
+                IsActive = true
+            };
+
+            _context.UserAddresses.Add(userAddress);
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.GetUserAddressAsync((int)user.Id);
+
+            result.Should().NotBeNull();
+            result.UserId.Should().Be(user.Id);
+            result.AddressId.Should().Be(address.Id);
+            result.IsActive.Should().BeTrue();
+            result.Address.Should().NotBeNull();
+            result.Address.City.Should().Be("Noida");
+        }
+
+        [TestMethod]
+        [Description("Verifies that inactive user address is not returned.")]
+        public async Task GetUserAddressAsync_WhenAddressIsInactive_ShouldReturnNull()
+        {
+            var user = CreateUser();
+            var address = new Address
+            {
+                HouseNumber = "12A",
+                StreetAddress = "MG Road",
+                City = "Noida",
+                State = "Uttar Pradesh",
+                PinCode = "110001",
+                Country = "India"
+            };
+
+            _context.Users.Add(user);
+            _context.Addresses.Add(address);
+            await _context.SaveChangesAsync();
+
+            var userAddress = new UserAddress
+            {
+                UserId = user.Id,
+                AddressId = address.Id,
+                IsActive = false
+            };
+
+            _context.UserAddresses.Add(userAddress);
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.GetUserAddressAsync((int)user.Id);
+
+            result.Should().BeNull();
+        }
+
+        [TestMethod]
+        [Description("Verifies that null is returned when user has no address.")]
+        public async Task GetUserAddressAsync_WhenNoAddressExists_ShouldReturnNull()
+        {
+            var user = CreateUser();
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            var result = await _repository.GetUserAddressAsync((int)user.Id);
+
+            result.Should().BeNull();
+        }
+
+        [TestMethod]
+        public async Task AddUserAddress_WhenAddressIsValid_ShouldAddAddress()
+        {
+            var user = CreateUser();
+            user.Id = 1;
+
+            var address = new Address
+            {
+                HouseNumber = "12A",
+                StreetAddress = "MG Road",
+                City = "Noida",
+                State = "Uttar Pradesh",
+                PinCode = "110001",
+                Country = "India"
+            };
+
+            var userAddress = new UserAddress
+            {
+                UserId = 1,
+                IsActive = true
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            await _repository.AddUserAddressAsync(address, userAddress);
+
+            var result = await _context.Addresses
+                .FirstOrDefaultAsync(x => x.Id == address.Id);
+
+            result.Should().NotBeNull();
+            result.HouseNumber.Should().Be("12A");
+            result.City.Should().Be("Noida");
+
+        }
+
+        [TestMethod]
+        [Description("Verifies that a user address relationship is added to the database.")]
+        public async Task AddUserAddress_WhenUserAddressIsValid_ShouldAddUserAddress()
+        {
+            var user = CreateUser();
+            user.Id = 1;
+
+            var address = new Address
+            {
+                HouseNumber = "12A",
+                StreetAddress = "MG Road",
+                City = "Noida",
+                State = "Uttar Pradesh",
+                PinCode = "110001",
+                Country = "India"
+            };
+
+            var userAddress = new UserAddress
+            {
+                UserId = 1,
+                IsActive = true
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            await _repository.AddUserAddressAsync(address, userAddress);
+
+            var result = await _context.UserAddresses
+                .FirstOrDefaultAsync(x =>
+                    x.UserId == user.Id &&
+                    x.AddressId == address.Id);
+
+            result.Should().NotBeNull();
+            result.UserId.Should().Be(user.Id);
+            result.AddressId.Should().Be(address.Id);
+            result.IsActive.Should().BeTrue();
+        }
+
     }
 }

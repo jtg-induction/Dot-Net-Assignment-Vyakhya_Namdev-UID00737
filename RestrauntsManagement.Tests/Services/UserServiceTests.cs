@@ -1,9 +1,11 @@
-﻿using DotNetRestaurantManagement.Exceptions;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Implementations;
+using DotNetRestaurantManagement.Services.Interfaces;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -17,13 +19,17 @@ namespace DotNetRestaurantManagement.Tests.Services
     public class UserServiceTests
     {
         private Mock<IUserRepository> _userRepositoryMock;
+        private Mock<IRefreshTokenRepository> _refreshTokenRepositoryMock;
         private UserService _userService;
 
         [TestInitialize]
         public void Setup()
         {
             _userRepositoryMock = new Mock<IUserRepository>();
-            _userService = new UserService(_userRepositoryMock.Object);
+            _refreshTokenRepositoryMock = new Mock<IRefreshTokenRepository>();
+            _userService = new UserService(
+                _userRepositoryMock.Object,
+                _refreshTokenRepositoryMock.Object);
         }
 
         private User CreateActiveUser()
@@ -37,6 +43,30 @@ namespace DotNetRestaurantManagement.Tests.Services
                 PhoneNumber = "9876543210",
                 IsActive = true,
                 Role = UserRole.Customer
+            };
+        }
+
+        private User CreateInactiveUser()
+        {
+            return new User
+            {
+                Id = 1,
+                Name = "Vyakhya Namdev",
+                Email = "vyakhyanamdev@test.com",
+                Password = "hashed-password",
+                IsActive = false
+            };
+        }
+
+        private RefreshToken CreateValidRefreshToken(User user, string refreshToken)
+        {
+            return new RefreshToken
+            {
+                Id = 10,
+                UserId = user.Id,
+                Token = DotNetRestaurantManagement.Helpers.TokenHelper.Hash(refreshToken),
+                CreatedAt = DateTime.UtcNow.AddDays(-1),
+                User = user
             };
         }
 
@@ -643,6 +673,194 @@ namespace DotNetRestaurantManagement.Tests.Services
                     It.IsAny<Address>(),
                     It.IsAny<UserAddress>()),
                 Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that DeactivateAccountAsync throws Unauthorized when the user does not exist")]
+        public async Task DeactivateAccountAsync_UserDoesNotExist_ThrowsApiException()
+        {
+            long userId = 1;
+            long refreshTokenId = 10;
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)userId))
+                .ReturnsAsync((User)null);
+
+            Func<Task> act = async () =>
+                await _userService.DeactivateAccountAsync(userId, refreshTokenId);
+
+            var exception = await act.Should().ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            exception.Which.Message.Should().Be(ErrorMessages.UserNotFound);
+
+            _userRepositoryMock.Verify(
+                x => x.GetByIdAsync((int)userId),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(It.IsAny<long>()),
+                Times.Never);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that DeactivateAccountAsync throws Unauthorized when the user is already inactive")]
+        public async Task DeactivateAccountAsync_UserIsInactive_ThrowsApiException()
+        {
+            long userId = 1;
+            long refreshTokenId = 10;
+
+            var user = CreateInactiveUser();
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)userId))
+                .ReturnsAsync(user);
+
+            Func<Task> act = async () =>
+                await _userService.DeactivateAccountAsync(userId, refreshTokenId);
+
+            var exception = await act.Should().ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            exception.Which.Message.Should().Be(ErrorMessages.UserNotFound);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(It.IsAny<long>()),
+                Times.Never);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that DeactivateAccountAsync throws BadRequest when the refresh token ID is invalid")]
+        public async Task DeactivateAccountAsync_InvalidRefreshTokenId_ThrowsApiException()
+        {
+            long userId = 1;
+            long refreshTokenId = 0;
+
+            var user = CreateActiveUser();
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)userId))
+                .ReturnsAsync(user);
+
+            Func<Task> act = async () =>
+                await _userService.DeactivateAccountAsync(userId, refreshTokenId);
+
+            var exception = await act.Should().ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            exception.Which.Message.Should().Be(ErrorMessages.InvalidRefreshToken);
+
+            user.IsActive.Should().BeFalse();
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(It.IsAny<long>()),
+                Times.Never);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that DeactivateAccountAsync throws ApiException when the refresh token belongs to another user.")]
+        public async Task DeactivateAccountAsync_RefreshTokenBelongsToAnotherUser_ThrowsApiException()
+        {
+            long userId = 1;
+            long refreshTokenId = 10;
+
+            var user = CreateActiveUser();
+            var refreshToken = CreateValidRefreshToken(user, "refresh-token");
+
+            refreshToken.UserId = 2;
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)userId))
+                .ReturnsAsync(user);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByIdAsync(refreshTokenId))
+                .ReturnsAsync(refreshToken);
+
+            Func<Task> act = async () =>
+                await _userService.DeactivateAccountAsync(userId, refreshTokenId);
+
+            var exception = await act.Should().ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            exception.Which.Message.Should().Be(ErrorMessages.InvalidRefreshToken);
+
+            user.IsActive.Should().BeFalse();
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(refreshTokenId),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that DeactivateAccountAsync deactivates the user and deletes the valid refresh token")]
+        public async Task DeactivateAccountAsync_ValidRequest_DeactivatesUserAndDeletesRefreshToken()
+        {
+            long userId = 1;
+            long refreshTokenId = 10;
+
+            var user = CreateActiveUser();
+            var refreshToken = CreateValidRefreshToken(user, "refresh-token");
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync((int)userId))
+                .ReturnsAsync(user);
+
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByIdAsync(refreshTokenId))
+                .ReturnsAsync(refreshToken);
+
+            await _userService.DeactivateAccountAsync(userId, refreshTokenId);
+
+            user.IsActive.Should().BeFalse();
+
+            _userRepositoryMock.Verify(
+                x => x.GetByIdAsync((int)userId),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(refreshTokenId),
+                Times.Once);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.Delete(refreshToken),
+                Times.Once);
+
+            _userRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Once);
         }
     }
 }

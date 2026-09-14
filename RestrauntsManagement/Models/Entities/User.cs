@@ -37,7 +37,7 @@ namespace DotNetRestaurantManagement.Models.Entities
 
         [Required]
         [MaxLength(ValidationConstants.PhoneNumberLength)]
-        [RegularExpression(RegexConstants.PhoneNumberRegex, ErrorMessage = ErrorMessages.ValidPhoneNumber)]
+        [RegularExpression(RegexConstants.PhoneNumberRegex, ErrorMessage = ErrorMessages.InvalidPhoneNumber)]
         [Index(IndexConstants.UserPhoneNumberIndex, IsUnique = true)]
         public string PhoneNumber { get; set; }
 

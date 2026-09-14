@@ -1,14 +1,30 @@
-﻿using DotNetRestaurantManagement.Models.Entities;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.Entities;
+using System;
 using System.Configuration;
+using System.Data.Common;
 using System.Data.Entity;
+using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Data
 {
+    /// Represents the Entity Framework database context for the restaurant management system.
     public class RestaurantDbContext : DbContext
     {
-        public RestaurantDbContext() : base("name="+ConfigurationManager.AppSettings["DbConnectionName"])
+        public RestaurantDbContext() : base("name="+ConfigurationManager.AppSettings[StringConstants.DbConnectionName])
         {
         }
+
+        /// <summary>
+        /// Initializes the database context using a provided database connection.
+        /// This constructor is mainly used for testing with a separate test database.
+        /// </summary>
+        /// <param name="connection">The database connection to use.</param>
+        public RestaurantDbContext(DbConnection connection)
+            : base(connection, true)
+        {
+        }
+
         public DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
@@ -16,6 +32,33 @@ namespace DotNetRestaurantManagement.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderedItems { get; set; }
         public DbSet<UserAddress> UserAddresses { get; set; }
+
+        /// <summary>
+        /// Saves all changes to the database and automatically sets the creation and update timestamps for tracked entities.
+        /// </summary>
+        public override async Task<int> SaveChangesAsync()
+        {
+            var now = DateTime.UtcNow;
+            foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    entry.Entity.CreatedAt = now;
+                    entry.Entity.UpdatedAt = now;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entry.Entity.UpdatedAt = now;
+                }
+            }
+
+            return await base.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// Configures entity relationships and database constraints.
+        /// </summary>
+        /// <param name="modelBuilder">Builder used to configure the entity model.</param>
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Entity<UserAddress>()

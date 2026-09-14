@@ -1,4 +1,6 @@
-﻿using System.Web.Http;
+﻿using DotNetRestaurantManagement.Filters;
+using System.Web.Http;
+using System.Web.Http.ExceptionHandling;
 
 namespace DotNetRestaurantManagement
 {
@@ -6,8 +8,6 @@ namespace DotNetRestaurantManagement
     {
         public static void Register(HttpConfiguration config)
         {
-            // Web API configuration and services
-
             // Web API routes
             config.MapHttpAttributeRoutes();
 
@@ -16,6 +16,14 @@ namespace DotNetRestaurantManagement
                 routeTemplate: "api/{controller}/{id}",
                 defaults: new { id = RouteParameter.Optional }
             );
+
+            // Global model validation
+            config.Filters.Add(new ValidateModelStateAttribute());
+
+            // Global exception handling
+            config.Services.Replace(
+                typeof(IExceptionHandler),
+                new GlobalExceptionHandler());
         }
     }
 }

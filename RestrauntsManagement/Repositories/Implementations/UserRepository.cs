@@ -14,8 +14,11 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
             _context = context;
         }
 
-        public async Task<bool> EmailExistsAsync(string email)
-        {
+        public async Task<User> GetByEmailAsync(string email){
+            return await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+        }
+
+        public async Task<bool> EmailExistsAsync(string email){
             return await _context.Users.AnyAsync(user => user.Email == email);
         }
 

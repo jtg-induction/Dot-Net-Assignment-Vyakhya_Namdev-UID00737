@@ -63,14 +63,5 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         {
             return await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
         }
-
-        public async Task DeleteAllByUserIdAsync(long userId)
-        {
-            var refreshTokens = await _context.RefreshTokens
-                .Where(x => x.UserId == userId)
-                .ToListAsync();
-
-            _context.RefreshTokens.RemoveRange(refreshTokens);
-        }
     }
 }

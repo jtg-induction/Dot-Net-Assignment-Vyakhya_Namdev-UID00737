@@ -1,5 +1,4 @@
 ﻿using DotNetRestaurantManagement.Controllers;
-using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Services.Interfaces;
@@ -72,15 +71,14 @@ namespace RestrauntsManagement.Tests.Controllers
                 .Setup(x => x.Signup(It.IsAny<SignupRequest>()))
                 .ReturnsAsync(response);
             var result = await _controller.Signup(request);
-            var createdResult = result as NegotiatedContentResult<SignupResponse>;
-            createdResult.Should().NotBeNull();
-            createdResult.StatusCode.Should().Be(HttpStatusCode.Created);
-            createdResult.Content.Should().NotBeNull();
-            createdResult.Content.UserId.Should().Be(1);
-            createdResult.Content.Name.Should().Be("Vyakhya Namdev");
-            createdResult.Content.Email.Should().Be("vyakhyanamdev@test.com");
-            createdResult.Content.Role.Should().Be("Customer");
-            createdResult.Content.Balance.Should().Be(1000);
+            var okResult = result as OkNegotiatedContentResult<ApiResponse<SignupResponse>>;
+            okResult.Should().NotBeNull();
+            okResult.Content.Should().NotBeNull();
+            okResult.Content.Data.UserId.Should().Be(1);
+            okResult.Content.Data.Name.Should().Be("Vyakhya Namdev");
+            okResult.Content.Data.Email.Should().Be("vyakhyanamdev@test.com");
+            okResult.Content.Data.Role.Should().Be("Customer");
+            okResult.Content.Data.Balance.Should().Be(1000);
         }
 
         [TestMethod]
@@ -89,13 +87,20 @@ namespace RestrauntsManagement.Tests.Controllers
         {
             SignupRequest request = null;
             SignupResponse response = GetValidResponse();
+
             _authServiceMock
                 .Setup(x => x.Signup(null))
                 .ReturnsAsync(response);
+
             var result = await _controller.Signup(request);
-            var createdResult = result as NegotiatedContentResult<SignupResponse>;
-            createdResult.Should().NotBeNull();
-            createdResult.StatusCode.Should().Be(HttpStatusCode.Created);
+
+            var okResult =
+                result as OkNegotiatedContentResult<ApiResponse<SignupResponse>>;
+
+            okResult.Should().NotBeNull();
+            okResult.Content.Success.Should().BeTrue();
+            okResult.Content.Data.Should().Be(response);
+
             _authServiceMock.Verify(
                 x => x.Signup(null),
                 Times.Once);

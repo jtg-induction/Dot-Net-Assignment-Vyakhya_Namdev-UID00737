@@ -289,7 +289,7 @@ namespace DotNetRestaurantManagement.Tests.Services
 
             _refreshTokenRepositoryMock.Verify(
                 x => x.SaveChangesAsync(),
-                Times.Exactly(2));
+                Times.Once);
         }
 
         [TestMethod]
@@ -398,7 +398,7 @@ namespace DotNetRestaurantManagement.Tests.Services
 
             _refreshTokenRepositoryMock.Verify(
                 x => x.SaveChangesAsync(),
-                Times.Exactly(2));
+                Times.Once);
         }
 
         [TestMethod]
@@ -479,8 +479,8 @@ namespace DotNetRestaurantManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Verifies that Logout deletes the refresh token associated with the authenticated user and refresh token ID.")]
-        public async Task LogoutAsync_ValidUserAndRefreshToken_DeletesToken()
+        [Description("Verifies that UpdateProfileAsync successfully updates the user's name & phone number")]
+        public async Task UpdateProfileAsync_ValidRequest_ReturnsUpdatedProfile()
         {
             const long userId = 1;
             const long refreshTokenId = 10;

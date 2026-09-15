@@ -1,6 +1,8 @@
 ﻿using DotNetRestaurantManagement.Data;
 using DotNetRestaurantManagement.Models.Entities;
 using System.Data.Entity;
+using System.Linq;
+using System.Runtime.Remoting.Contexts;
 using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Repositories.Interfaces
@@ -35,6 +37,40 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+        public async Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, long userId){
+            return await _context.Users
+                .AnyAsync(user =>
+                    user.PhoneNumber == phoneNumber &&
+                    user.Id != userId);
+        }
+
+        public async Task<UserAddress> GetUserAddressAsync(long userId){
+            return await _context.UserAddresses
+                .Include(ua => ua.Address)
+                .FirstOrDefaultAsync(ua =>
+                    ua.UserId == userId &&
+                    ua.IsActive);
+        }
+        public void AddUserAddress(Address address, UserAddress userAddress)
+        {
+            _context.Addresses.Add(address);
+            userAddress.Address = address;
+            _context.UserAddresses.Add(userAddress);
+        }
+
+        public async Task<User> GetByIdAsync(long userId)
+        {
+            return await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
+        }
+
+        public async Task DeleteAllByUserIdAsync(long userId)
+        {
+            var refreshTokens = await _context.RefreshTokens
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
+
+            _context.RefreshTokens.RemoveRange(refreshTokens);
         }
     }
 }

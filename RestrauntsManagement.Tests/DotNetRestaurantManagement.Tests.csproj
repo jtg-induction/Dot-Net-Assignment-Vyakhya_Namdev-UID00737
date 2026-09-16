@@ -214,11 +214,12 @@
   <ItemGroup>
     <Compile Include="Controllers\AddressControllerTests.cs" />
     <Compile Include="Controllers\AuthControllerTests.cs" />
+    <Compile Include="Controllers\OrderControllerTests.cs" />
     <Compile Include="Controllers\UserControllerTests.cs" />
     <Compile Include="Helpers\ClaimsHelperTests.cs" />
     <Compile Include="Helpers\PasswordHashingHelperTests.cs" />
     <Compile Include="Helpers\TokenHelperTests.cs" />
-	  <Compile Include="Helpers\TestAsyncEnumerable.cs" />
+    <Compile Include="Helpers\TestAsyncEnumerable.cs" />
     <Compile Include="Controllers\RestaurantControllerTests.cs" />
     <Compile Include="Helpers\PaginationHelperTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -227,6 +228,7 @@
     <Compile Include="Repository\RestaurantRepositoryTests.cs" />
     <Compile Include="Repository\UserRepositoryTests.cs" />
     <Compile Include="Services\AuthServiceTests.cs" />
+    <Compile Include="Services\OrderServiceTests.cs" />
     <Compile Include="Services\UserServiceTests.cs" />
     <Compile Include="Services\RestaurantServiceTests.cs" />
   </ItemGroup>

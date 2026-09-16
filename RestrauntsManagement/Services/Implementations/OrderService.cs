@@ -170,5 +170,13 @@ namespace DotNetRestaurantManagement.Services
                 }
             }
         }
+
+        public async Task<OrderDetailsResponse> GetOrderDetailsAsync(
+            long orderId, 
+            long userId)
+        {
+            return await _orderRepository
+                .GetOrderDetailsAsync(orderId, userId);
+        }
     }
 }

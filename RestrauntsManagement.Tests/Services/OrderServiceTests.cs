@@ -353,6 +353,81 @@ namespace RestrauntsManagement.Tests.Services
                 Times.Never);
         }
 
+        [TestMethod]
+        [Description("Verifies that GetOrderDetailsAsync returns the order details when the repository finds the order.")]
+        public async Task GetOrderDetailsAsync_OrderExists_ReturnsOrderDetails()
+        {
+            long userId = 1;
+            long orderId = 100;
+
+            var expectedOrder = new OrderDetailsResponse
+            {
+                OrderId = orderId,
+                DeliveryAddress = 1,
+                TotalAmount = 560,
+                TotalItems = 3,
+                RestaurantId = 10,
+                Items = new List<OrderItemResponse>()
+            };
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderDetailsAsync(orderId, userId))
+                .ReturnsAsync(expectedOrder);
+
+            var result = await _orderService
+                .GetOrderDetailsAsync(orderId, userId);
+
+            result.Should().NotBeNull();
+            result.Should().BeEquivalentTo(expectedOrder);
+
+            _orderRepositoryMock.Verify(
+                x => x.GetOrderDetailsAsync(orderId, userId),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies that GetOrderDetailsAsync returns null when the repository does not find the order.")]
+        public async Task GetOrderDetailsAsync_OrderDoesNotExist_ReturnsNull()
+        {
+            long userId = 1;
+            long orderId = 999;
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderDetailsAsync(orderId, userId))
+                .ReturnsAsync((OrderDetailsResponse)null);
+
+            var result = await _orderService
+                .GetOrderDetailsAsync(orderId, userId);
+
+            result.Should().BeNull();
+
+            _orderRepositoryMock.Verify(
+                x => x.GetOrderDetailsAsync(orderId, userId),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies that GetOrderDetailsAsync passes the correct user ID and order ID to the repository.")]
+        public async Task GetOrderDetailsAsync_ValidIds_PassesCorrectIdsToRepository()
+        {
+            long userId = 25;
+            long orderId = 150;
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderDetailsAsync(orderId, userId))
+                .ReturnsAsync(new OrderDetailsResponse
+                {
+                    OrderId = orderId
+                });
+
+            await _orderService
+                .GetOrderDetailsAsync(orderId, userId);
+
+            _orderRepositoryMock.Verify(
+                x => x.GetOrderDetailsAsync(orderId, userId),
+                Times.Once);
+        }
+
         private PlaceOrderRequest CreateValidRequest()
         {
             return new PlaceOrderRequest

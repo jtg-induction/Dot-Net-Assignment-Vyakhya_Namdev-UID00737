@@ -2,6 +2,7 @@
 using DotNetRestaurantManagement.Controllers;
 using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Models.DTO;
+using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Services.Interfaces;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -155,7 +156,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetails returns the order details successfully for an authenticated user.")]
+        [Description("Verifies that GetOrderDetails returns the order details successfully for an authenticated user")]
         public async Task GetOrderDetails_ShouldReturnOrderDetails_WhenOrderExists()
         {
             long userId = 1;
@@ -191,7 +192,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetails throws NotFound when the requested order does not exist or does not belong to the authenticated user.")]
+        [Description("Verifies that GetOrderDetails throws NotFound when the requested order does not exist or does not belong to the authenticated user")]
         public async Task GetOrderDetails_ShouldThrowNotFound_WhenOrderDoesNotExist()
         {
             long userId = 1;
@@ -218,7 +219,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetails passes the authenticated user ID from claims to the service.")]
+        [Description("Verifies that GetOrderDetails passes the authenticated user ID from claims to the service")]
         public async Task GetOrderDetails_ShouldPassCorrectUserIdToService()
         {
             long userId = 1;
@@ -239,7 +240,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetails should return the correct order ID.")]
+        [Description("Verifies that GetOrderDetails should return the correct order ID")]
         public async Task GetOrderDetails_ShouldReturnCorrectOrderId()
         {
             long orderId = 150;
@@ -262,7 +263,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetails should call the service only once.")]
+        [Description("Verifies that GetOrderDetails should call the service only once")]
         public async Task GetOrderDetails_ShouldCallServiceOnlyOnce()
         {
             long orderId = 100;
@@ -278,6 +279,118 @@ namespace RestrauntsManagement.Tests.Controllers
 
             _orderServiceMock.Verify(
                 x => x.GetOrderDetailsAsync(orderId, 1),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrder returns a successful response with cancelled status when the order is cancelled successfully")]
+        public async Task CancelOrder_ShouldReturnOk_WhenOrderIsCancelled()
+        {
+            long orderId = 10;
+            long userId = 1;
+
+            var serviceResponse = new CancelOrderResponse
+            {
+                OrderStatus = OrderStatus.Cancelled
+            };
+
+            _orderServiceMock
+                .Setup(service => service.CancelOrderAsync(orderId, userId))
+                .ReturnsAsync(serviceResponse);
+
+            var result = await _controller.CancelOrder(orderId);
+
+            var okResult = result
+                .Should()
+                .BeOfType<OkNegotiatedContentResult<ApiResponse<CancelOrderResponse>>>()
+                .Subject;
+
+            okResult.Content.Success.Should().BeTrue();
+            okResult.Content.Data.Should().NotBeNull();
+            okResult.Content.Data.OrderStatus.Should().Be(OrderStatus.Cancelled);
+            okResult.Content.Message.Should().Be(SuccessMessages.OrderCancelled);
+
+            _orderServiceMock.Verify(
+                service => service.CancelOrderAsync(orderId, userId),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrder passes the authenticated user ID from the UserId claim and the correct order ID to the service")]
+        public async Task CancelOrder_ShouldPassCorrectIdsToService()
+        {
+            long orderId = 25;
+            long userId = 1;
+
+            _orderServiceMock
+                .Setup(service => service.CancelOrderAsync(orderId, userId))
+                .ReturnsAsync(new CancelOrderResponse
+                {
+                    OrderStatus = OrderStatus.Cancelled
+                });
+
+            await _controller.CancelOrder(orderId);
+
+            _orderServiceMock.Verify(
+                service => service.CancelOrderAsync(
+                    It.Is<long>(id => id == orderId),
+                    It.Is<long>(id => id == userId)),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrder gives the NotFound ApiException when the requested order does not exist")]
+        public async Task CancelOrder_ShouldThrowNotFound_WhenOrderDoesNotExist()
+        {
+            long orderId = 999;
+            long userId = 1;
+
+            _orderServiceMock
+                .Setup(service => service.CancelOrderAsync(orderId, userId))
+                .ThrowsAsync(
+                    new ApiException(
+                        HttpStatusCode.NotFound,
+                        ErrorMessages.OrderNotFound));
+
+            Func<Task> act = async () =>
+                await _controller.CancelOrder(orderId);
+
+            await act.Should()
+                .ThrowAsync<ApiException>()
+                .Where(exception =>
+                    exception.StatusCode == HttpStatusCode.NotFound &&
+                    exception.Message == ErrorMessages.OrderNotFound);
+
+            _orderServiceMock.Verify(
+                service => service.CancelOrderAsync(orderId, userId),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrder gives the BadRequest Exception when the order cannot be cancelled")]
+        public async Task CancelOrder_ShouldThrowBadRequest_WhenOrderCannotBeCancelled()
+        {
+            long orderId = 10;
+            long userId = 1;
+
+            _orderServiceMock
+                .Setup(service => service.CancelOrderAsync(orderId, userId))
+                .ThrowsAsync(
+                    new ApiException(
+                        HttpStatusCode.BadRequest,
+                        ErrorMessages.OrderCannotBeCancelled));
+
+            Func<Task> act = async () =>
+                await _controller.CancelOrder(orderId);
+
+            await act.Should()
+                .ThrowAsync<ApiException>()
+                .Where(exception =>
+                    exception.StatusCode == HttpStatusCode.BadRequest &&
+                    exception.Message == ErrorMessages.OrderCannotBeCancelled);
+
+            _orderServiceMock.Verify(
+                service => service.CancelOrderAsync(orderId, userId),
                 Times.Once);
         }
     }

@@ -1,4 +1,5 @@
-﻿using DotNetRestaurantManagement.Exceptions;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Models.Enums;
@@ -472,7 +473,7 @@ namespace RestrauntsManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetailsAsync returns the order details when the repository finds the order.")]
+        [Description("Verifies that GetOrderDetailsAsync returns the order details when the repository finds the order")]
         public async Task GetOrderDetailsAsync_OrderExists_ReturnsOrderDetails()
         {
             long userId = 1;
@@ -504,7 +505,7 @@ namespace RestrauntsManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetailsAsync returns null when the repository does not find the order.")]
+        [Description("Verifies that GetOrderDetailsAsync returns null when the repository does not find the order")]
         public async Task GetOrderDetailsAsync_OrderDoesNotExist_ReturnsNull()
         {
             long userId = 1;
@@ -525,7 +526,7 @@ namespace RestrauntsManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Verifies that GetOrderDetailsAsync passes the correct user ID and order ID to the repository.")]
+        [Description("Verifies that GetOrderDetailsAsync passes the correct user ID and order ID to the repository")]
         public async Task GetOrderDetailsAsync_ValidIds_PassesCorrectIdsToRepository()
         {
             long userId = 25;
@@ -544,6 +545,355 @@ namespace RestrauntsManagement.Tests.Services
             _orderRepositoryMock.Verify(
                 x => x.GetOrderDetailsAsync(orderId, userId),
                 Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrderAsync throws NotFound when requested order does not exist or does not belong to the user")]
+        public async Task CancelOrderAsync_ShouldThrowNotFound_WhenOrderDoesNotExist()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderAsync(orderId, userId))
+                .ReturnsAsync((Order)null);
+
+            Func<Task> act = async () => await _orderService.CancelOrderAsync(orderId, userId);
+            var exception = await act.Should()
+                .ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode
+                .Should().Be(HttpStatusCode.NotFound);
+
+            exception.Which.Message
+                .Should().Be(ErrorMessages.OrderNotFound);
+
+            _transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Once);
+
+            _transactionMock.Verify(
+                x => x.Commit(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrderAsync throws Unauthorized when the user is inactive")]
+        public async Task CancelOrderAsync_ShouldThrowUnauthorized_WhenUserIsInactive()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            var order = new Order
+            {
+                Id = orderId,
+                CustomerId = userId,
+                RestaurantId = 13,
+                TotalAmount = 500,
+                Status = OrderStatus.Placed,
+                OrderedItems = new List<OrderItem>()
+            };
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderAsync(orderId, userId))
+                .ReturnsAsync(order);
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(userId))
+                .ReturnsAsync(new User
+                {
+                    Id = userId,
+                    IsActive = false
+                });
+
+            Func<Task> act = async () => await _orderService.CancelOrderAsync(orderId, userId);
+            var exception = await act.Should()
+                .ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode
+                .Should().Be(HttpStatusCode.Unauthorized);
+
+            _transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Once);
+
+            _transactionMock.Verify(
+                x => x.Commit(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies that CancelOrderAsync throws BadRequest when the order is already cancelled")]
+        public async Task CancelOrderAsync_ShouldThrowBadRequest_WhenOrderIsAlreadyCancelled()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            var order = new Order
+            {
+                Id = orderId,
+                CustomerId = userId,
+                RestaurantId = 13,
+                TotalAmount = 500,
+                Status = OrderStatus.Cancelled,
+                OrderedItems = new List<OrderItem>()
+            };
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderAsync(orderId, userId))
+                .ReturnsAsync(order);
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(userId))
+                .ReturnsAsync(new User
+                {
+                    Id = userId,
+                    IsActive = true
+                });
+
+            Func<Task> act = async () => await _orderService.CancelOrderAsync(orderId, userId);
+            var exception = await act.Should()
+                .ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode
+                .Should().Be(HttpStatusCode.BadRequest);
+
+            exception.Which.Message
+                .Should().Be(ErrorMessages.OrderCannotBeCancelled);
+
+            _transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies that CancelOrderAsync throws BadRequest when the order has already been dispatched")]
+        public async Task CancelOrderAsync_ShouldThrowBadRequest_WhenOrderIsDispatched()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            var order = new Order
+            {
+                Id = orderId,
+                CustomerId = userId,
+                RestaurantId = 13,
+                TotalAmount = 500,
+                Status = OrderStatus.Dispatched,
+                OrderedItems = new List<OrderItem>()
+            };
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderAsync(orderId, userId))
+                .ReturnsAsync(order);
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(userId))
+                .ReturnsAsync(new User
+                {
+                    Id = userId,
+                    IsActive = true
+                });
+
+            Func<Task> act = async () =>
+                await _orderService.CancelOrderAsync(orderId, userId);
+
+            var exception = await act.Should()
+                .ThrowAsync<ApiException>();
+
+            exception.Which.StatusCode
+                .Should().Be(HttpStatusCode.BadRequest);
+
+            _transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrderAsync restores menu item quantities, refunds the user, " +
+            "changes the order status to Cancelled, and commits the transaction")]
+        public async Task CancelOrderAsync_ShouldCancelOrderSuccessfully()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            var menuItem1 = new MenuItem
+            {
+                Id = 32,
+                RestaurantId = 13,
+                QuantityAvailable = 10
+            };
+
+            var menuItem2 = new MenuItem
+            {
+                Id = 33,
+                RestaurantId = 13,
+                QuantityAvailable = 20
+            };
+
+            var order = new Order
+            {
+                Id = orderId,
+                CustomerId = userId,
+                RestaurantId = 13,
+                TotalAmount = 560,
+                Status = OrderStatus.Placed,
+                OrderedItems = new List<OrderItem>
+                {
+                    new OrderItem
+                    {
+                        Id = 1,
+                        OrderId = orderId,
+                        MenuItemId = 32,
+                        Quantity = 2,
+                        Price = 180
+                    },
+                    new OrderItem
+                    {
+                        Id = 2,
+                        OrderId = orderId,
+                        MenuItemId = 33,
+                        Quantity = 1,
+                        Price = 200
+                    }
+                }
+            };
+
+            var user = new User
+            {
+                Id = userId,
+                IsActive = true,
+                Balance = 1000
+            };
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderAsync(orderId, userId))
+                .ReturnsAsync(order);
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(userId))
+                .ReturnsAsync(user);
+
+            _orderRepositoryMock
+                .Setup(x => x.GetMenuItemAsync(32, 13))
+                .ReturnsAsync(menuItem1);
+
+            _orderRepositoryMock
+                .Setup(x => x.GetMenuItemAsync(33, 13))
+                .ReturnsAsync(menuItem2);
+
+            _orderRepositoryMock
+                .Setup(x => x.SaveChangesAsync())
+                .Returns(Task.CompletedTask);
+
+            var result = await _orderService.CancelOrderAsync(orderId, userId);
+
+            result.Should().NotBeNull();
+            result.OrderStatus.Should().Be(OrderStatus.Cancelled);
+
+            order.Status.Should().Be(OrderStatus.Cancelled);
+            menuItem1.QuantityAvailable.Should().Be(12);
+            menuItem2.QuantityAvailable.Should().Be(21);
+
+            user.Balance.Should().Be(1560);
+            _orderRepositoryMock.Verify(
+                x => x.GetOrderAsync(orderId, userId),
+                Times.Once);
+
+            _userRepositoryMock.Verify(
+                x => x.GetByIdAsync(userId),
+                Times.Once);
+
+            _orderRepositoryMock.Verify(
+                x => x.GetMenuItemAsync(32, 13),
+                Times.Once);
+
+            _orderRepositoryMock.Verify(
+                x => x.GetMenuItemAsync(33, 13),
+                Times.Once);
+
+            _orderRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
+                Times.Once);
+
+            _transactionMock.Verify(
+                x => x.Commit(),
+                Times.Once);
+
+            _transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Never);
+        }
+
+        [TestMethod]
+        [Description("Verifies CancelOrderAsync rolls back the transaction when saving the cancellation changes fails")]
+        public async Task CancelOrderAsync_ShouldRollback_WhenSaveChangesFails()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            var menuItem = new MenuItem
+            {
+                Id = 32,
+                RestaurantId = 13,
+                QuantityAvailable = 10
+            };
+
+            var order = new Order
+            {
+                Id = orderId,
+                CustomerId = userId,
+                RestaurantId = 13,
+                TotalAmount = 500,
+                Status = OrderStatus.Placed,
+                OrderedItems = new List<OrderItem>
+                        {
+                            new OrderItem
+                            {
+                                Id = 1,
+                                OrderId = orderId,
+                                MenuItemId = 32,
+                                Quantity = 2,
+                                Price = 180
+                            }
+                        }
+            };
+
+            _orderRepositoryMock
+                .Setup(x => x.GetOrderAsync(orderId, userId))
+                .ReturnsAsync(order);
+
+            _userRepositoryMock
+                .Setup(x => x.GetByIdAsync(userId))
+                .ReturnsAsync(new User
+                {
+                    Id = userId,
+                    IsActive = true,
+                    Balance = 1000
+                });
+
+            _orderRepositoryMock
+                .Setup(x => x.GetMenuItemAsync(32, 13))
+                .ReturnsAsync(menuItem);
+
+            _orderRepositoryMock
+                .Setup(x => x.SaveChangesAsync())
+                .ThrowsAsync(new Exception("Database error"));
+
+            Func<Task> act = async () =>
+                await _orderService.CancelOrderAsync(orderId, userId);
+
+            await act.Should()
+                .ThrowAsync<Exception>()
+                .WithMessage("Database error");
+
+            _transactionMock.Verify(
+                x => x.Rollback(),
+                Times.Once);
+
+            _transactionMock.Verify(
+                x => x.Commit(),
+                Times.Never);
         }
 
         private PlaceOrderRequest CreateValidRequest()

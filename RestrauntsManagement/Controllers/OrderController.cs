@@ -52,5 +52,21 @@ namespace DotNetRestaurantManagement.Controllers
                 SuccessMessages.OrderSuccessMessage
             ));
         }
+
+        [HttpPatch]
+        [Route("{orderId:long}")]
+        [JwtAuthorize]
+        public async Task<IHttpActionResult> CancelOrder(long orderId)
+        {
+            long userId = ClaimsHelper.GetUserId(User);
+            var result = await _orderService.CancelOrderAsync(
+                orderId,
+                userId);
+
+            return Ok(new ApiResponse<CancelOrderResponse>(
+                            true,
+                            result,
+                            SuccessMessages.OrderCancelled));
+        }
     }
 }

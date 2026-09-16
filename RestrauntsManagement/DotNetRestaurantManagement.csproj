@@ -247,6 +247,7 @@
     <Compile Include="Models\DTO\AddressRequest.cs" />
     <Compile Include="Models\DTO\AddressResponse.cs" />
     <Compile Include="Models\DTO\ApiResponse.cs" />
+    <Compile Include="Models\DTO\CancelOrderResponse.cs" />
     <Compile Include="Models\DTO\ChangePasswordRequest.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
     <Compile Include="Models\DTO\OrderDetailsResponse.cs" />

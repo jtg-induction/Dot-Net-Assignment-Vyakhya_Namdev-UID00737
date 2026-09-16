@@ -208,10 +208,124 @@ namespace RestrauntsManagement.Tests.Repository
                 .ReturnsAsync(1);
 
             await _repository.SaveChangesAsync();
-
             _contextMock.Verify(
                 x => x.SaveChangesAsync(),
                 Times.Once);
+        }
+
+        [TestMethod]
+        [Description("Verifies GetOrderAsync returns order with its ordered items if order belongs to provided user")]
+        public async Task GetOrderAsync_ShouldReturnOrder_WhenOrderBelongsToUser()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            var order = new Order
+            {
+                Id = orderId,
+                CustomerId = userId,
+                RestaurantId = 13,
+                DeliveryAddressId = 1,
+                TotalItems = 2,
+                TotalAmount = 360,
+                Status = OrderStatus.Placed,
+                OrderedItems = new List<OrderItem>
+                    {
+                        new OrderItem
+                        {
+                            Id = 1,
+                            OrderId = orderId,
+                            MenuItemId = 32,
+                            Quantity = 2,
+                            Price = 180
+                        }
+                    }
+            };
+
+            var orders = new List<Order>
+                                {
+                                    order
+                                };
+
+            var ordersMock = CreateMockDbSet(orders);
+            _contextMock
+                .Setup(x => x.Orders)
+                .Returns(ordersMock.Object);
+
+            var result = await _repository.GetOrderAsync(orderId, userId);
+
+            result.Should().NotBeNull();
+            result.Id.Should().Be(orderId);
+            result.CustomerId.Should().Be(userId);
+            result.RestaurantId.Should().Be(13);
+            result.TotalAmount.Should().Be(360);
+            result.Status.Should().Be(OrderStatus.Placed);
+            result.OrderedItems.Should().HaveCount(1);
+            result.OrderedItems.First().MenuItemId.Should().Be(32);
+            result.OrderedItems.First().Quantity.Should().Be(2);
+        }
+
+        [TestMethod]
+        [Description("Verifies that GetOrderAsync returns null when the requested order does not belong to the provided user")]
+        public async Task GetOrderAsync_ShouldReturnNull_WhenOrderDoesNotBelongToUser()
+        {
+            long orderId = 100;
+            long userId = 1;
+
+            var orders = new List<Order>
+                    {
+                        new Order
+                        {
+                            Id = orderId,
+                            CustomerId = 2,
+                            RestaurantId = 13,
+                            DeliveryAddressId = 1,
+                            TotalItems = 2,
+                            TotalAmount = 360,
+                            Status = OrderStatus.Placed
+                        }
+                    };
+
+            var ordersMock = CreateMockDbSet(orders);
+
+            _contextMock
+                .Setup(x => x.Orders)
+                .Returns(ordersMock.Object);
+
+            var result = await _repository.GetOrderAsync(orderId, userId);
+
+            result.Should().BeNull();
+        }
+
+        [TestMethod]
+        [Description("Verifies that GetOrderAsync returns null when the requested order does not exist")]
+        public async Task GetOrderAsync_ShouldReturnNull_WhenOrderDoesNotExist()
+        {
+            long orderId = 999;
+            long userId = 1;
+
+            var orders = new List<Order>
+                        {
+                            new Order
+                            {
+                                Id = 100,
+                                CustomerId = userId,
+                                RestaurantId = 13,
+                                DeliveryAddressId = 1,
+                                TotalItems = 2,
+                                TotalAmount = 360,
+                                Status = OrderStatus.Placed
+                            }
+                        };
+
+            var ordersMock = CreateMockDbSet(orders);
+            _contextMock
+                .Setup(x => x.Orders)
+                .Returns(ordersMock.Object);
+
+            var result = await _repository.GetOrderAsync(orderId, userId);
+
+            result.Should().BeNull();
         }
 
         private Mock<DbSet<T>> CreateMockDbSet<T>(

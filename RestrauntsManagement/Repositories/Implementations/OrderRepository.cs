@@ -44,6 +44,14 @@ namespace DotNetRestaurantManagement.Repositories
                     x.RestaurantId == restaurantId);
         }
 
+        public async Task<Order> GetOrderAsync(
+                long orderId,
+                long userId)
+        {
+            return await _context.Orders
+                .FirstOrDefaultAsync(x => x.Id == orderId && 
+                x.CustomerId == userId);
+        }
         public void AddOrder(Order order)
         {
             _context.Orders.Add(order);

@@ -183,5 +183,67 @@ namespace DotNetRestaurantManagement.Services
             return await _orderRepository
                 .GetOrderDetailsAsync(orderId, userId);
         }
+
+        public async Task<CancelOrderResponse> CancelOrderAsync(
+           long orderId,
+           long userId)
+        {
+            using (var transaction = _orderRepository.BeginTransaction(IsolationLevel.Serializable))
+            {
+                try
+                {
+                    var order = await _orderRepository.GetOrderAsync(
+                        orderId,
+                        userId);
+
+                    if (order == null)
+                    {
+                        throw new ApiException(
+                            HttpStatusCode.NotFound,
+                            ErrorMessages.OrderNotFound);
+                    }
+
+                    var user = await _userRepository.GetByIdAsync(userId);
+                    if (user == null || !user.IsActive)
+                    {
+                        throw new ApiException(
+                            HttpStatusCode.Unauthorized,
+                            ErrorMessages.UserNotFound);
+                    }
+
+                    if (order.Status == OrderStatus.Rejected ||
+                        order.Status == OrderStatus.Cancelled ||
+                        order.Status == OrderStatus.Dispatched ||
+                        order.Status == OrderStatus.Delivered)
+                    {
+                        throw new ApiException(
+                            HttpStatusCode.BadRequest,
+                            ErrorMessages.OrderCannotBeCancelled);
+                    }
+
+                    foreach (var orderItem in order.OrderedItems)
+                    {
+                        var menuItem = await _orderRepository.GetMenuItemAsync(
+                            orderItem.MenuItemId,
+                            order.RestaurantId);
+                        menuItem.QuantityAvailable += orderItem.Quantity;
+                    }
+
+                    user.Balance += order.TotalAmount;
+                    order.Status = OrderStatus.Cancelled;
+                    await _orderRepository.SaveChangesAsync();
+                    transaction.Commit();
+                    return new CancelOrderResponse
+                    {
+                        OrderStatus = OrderStatus.Cancelled
+                    };
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
     }
 }

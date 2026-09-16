@@ -63,5 +63,14 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         {
             return await _context.Users.FirstOrDefaultAsync(user => user.Id == userId);
         }
+
+        public async Task<User> GetActiveUserAsync(
+            long userId)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(x =>
+                    x.Id == userId &&
+                    x.IsActive);
+        }
     }
 }

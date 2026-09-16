@@ -21,5 +21,14 @@
         public const string InvalidRestaurantId = "RestaurantId must be greater than 0!";
         public const string RestaurantNotFound = "Restaurant Not Found!";
         public const string RestaurantNotAvailable = "Restaurant Not Available!";
+        public const string NullOrderRequestException = "Order Request cannot be null!";
+        public const string EmptyOrderItemsException = "Order must contain at least one item!";
+        public const string ItemQuantityException = "Item quantity must be greater than zero!";
+        public const string AddressNotFound = "Delivery Address not belongs to user!";
+        public const string ItemNotFound = "One or More items not found!";
+        public const string InsufficientQuanityError = "Insufficient quantity for menu item";
+        public const string DuplicateMenuItemException = "Duplicate menu items are not allowed!";
+        public const string ItemsMustBelongToSameRestaurant = "All items in an order must belong to the same restaurant";
+        public const string InsufficientBalance = "Insufficeint User balance!";
     }
 }

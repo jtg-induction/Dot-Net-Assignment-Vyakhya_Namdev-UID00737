@@ -2,6 +2,7 @@ using DotNetRestaurantManagement.Data;
 using DotNetRestaurantManagement.Repositories;
 using DotNetRestaurantManagement.Repositories.Implementations;
 using DotNetRestaurantManagement.Repositories.Interfaces;
+using DotNetRestaurantManagement.Services;
 using DotNetRestaurantManagement.Services.Implementations;
 using DotNetRestaurantManagement.Services.Interfaces;
 using System.Web.Http;
@@ -33,6 +34,10 @@ namespace DotNetRestaurantManagement
             container.RegisterType<IRestaurantService, RestaurantService>();
             // Registers Restaurants Repostiories
             container.RegisterType<IRestaurantRepository, RestaurantRepository>(new HierarchicalLifetimeManager());
+            // Registers IOrderService with its concrete implementation.
+            container.RegisterType<IOrderService, OrderService>();
+            // Registers IOrderRepository with its concrete implementation.
+            container.RegisterType<IOrderRepository, OrderRepository>();
             // Sets Unity as the dependency resolver for Web API.
             GlobalConfiguration.Configuration.DependencyResolver = new UnityDependencyResolver(container);
         }

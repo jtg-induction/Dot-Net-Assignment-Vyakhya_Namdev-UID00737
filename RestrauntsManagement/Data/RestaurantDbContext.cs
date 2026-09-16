@@ -28,10 +28,10 @@ namespace DotNetRestaurantManagement.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
-        public DbSet<MenuItem> MenuItems { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderedItems { get; set; }
-        public DbSet<UserAddress> UserAddresses { get; set; }
+        public virtual DbSet<MenuItem> MenuItems { get; set; }
+        public virtual DbSet<Order> Orders { get; set; }
+        public virtual DbSet<OrderItem> OrderedItems { get; set; }
+        public virtual DbSet<UserAddress> UserAddresses { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         /// <summary>
         /// Saves all changes to the database and automatically sets the creation and update timestamps for tracked entities.

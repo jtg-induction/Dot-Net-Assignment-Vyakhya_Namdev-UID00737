@@ -7,5 +7,6 @@ namespace DotNetRestaurantManagement.Services.Interfaces
     {
         Task<OrderResponse> PlaceOrderAsync(long userId, PlaceOrderRequest request);
         Task<OrderDetailsResponse> GetOrderDetailsAsync(long orderId, long userId);
+        Task<CancelOrderResponse> CancelOrderAsync(long orderId, long userId);
     }
 }

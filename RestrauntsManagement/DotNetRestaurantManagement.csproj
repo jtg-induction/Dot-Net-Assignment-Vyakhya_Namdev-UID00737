@@ -247,6 +247,7 @@
     <Compile Include="Models\DTO\AddressRequest.cs" />
     <Compile Include="Models\DTO\AddressResponse.cs" />
     <Compile Include="Models\DTO\ApiResponse.cs" />
+    <Compile Include="Models\DTO\CancelOrderResponse.cs" />
     <Compile Include="Models\DTO\ChangePasswordRequest.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
     <Compile Include="Models\DTO\OrderDetailsResponse.cs" />
@@ -260,6 +261,7 @@
     <Compile Include="Models\DTO\PaginationResult.cs" />
     <Compile Include="Models\DTO\RestaurantAddressDto.cs" />
     <Compile Include="Models\DTO\RestaurantDto.cs" />
+    <Compile Include="Models\DTO\RestaurantResponse.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />
     <Compile Include="Models\DTO\SignupResponse.cs" />
     <Compile Include="Models\DTO\LoginRequest.cs" />

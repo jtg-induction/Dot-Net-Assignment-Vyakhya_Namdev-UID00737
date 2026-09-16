@@ -1,4 +1,5 @@
-﻿using DotNetRestaurantManagement.Models.Entities;
+﻿using DotNetRestaurantManagement.Models.DTO;
+using DotNetRestaurantManagement.Models.Entities;
 using System.Data;
 using System.Data.Entity;
 using System.Threading.Tasks;
@@ -20,6 +21,8 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         void AddOrder(Order order);
 
         void AddOrderItem(OrderItem orderItem);
+
+        Task<OrderDetailsResponse> GetOrderDetailsAsync(long orderId, long userId);
 
         Task SaveChangesAsync();
     }

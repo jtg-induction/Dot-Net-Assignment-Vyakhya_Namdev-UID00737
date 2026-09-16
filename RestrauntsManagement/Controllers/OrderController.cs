@@ -1,7 +1,10 @@
-﻿using DotNetRestaurantManagement.Filters;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Exceptions;
+using DotNetRestaurantManagement.Filters;
 using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Services.Interfaces;
+using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -25,6 +28,29 @@ namespace DotNetRestaurantManagement.Controllers
             long userId = ClaimsHelper.GetUserId(User);
             long orderId = await _orderService.PlaceOrderAsync(userId, request);
             return Ok(new ApiResponse<long>(true, orderId));
+        }
+
+        /// Fetching the order details made by user
+        [JwtAuthorize]
+        [HttpGet]
+        [Route("{orderId:long}")]
+        public async Task<IHttpActionResult> GetOrderDetails(long orderId)
+        {
+            long userId = ClaimsHelper.GetUserId(User);
+            var order = await _orderService
+                .GetOrderDetailsAsync(orderId, userId);
+            if(order == null)
+            {
+                throw new ApiException(
+                    HttpStatusCode.NotFound, ErrorMessages.OrderNotFound
+                    );
+            }
+            return Ok(new ApiResponse<OrderDetailsResponse>
+            (
+                true,
+                order,
+                SuccessMessages.OrderSuccessMessage
+            ));
         }
     }
 }

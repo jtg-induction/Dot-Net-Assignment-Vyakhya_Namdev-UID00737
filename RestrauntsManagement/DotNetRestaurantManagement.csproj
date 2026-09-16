@@ -249,7 +249,9 @@
     <Compile Include="Models\DTO\ApiResponse.cs" />
     <Compile Include="Models\DTO\ChangePasswordRequest.cs" />
     <Compile Include="Models\DTO\ErrorResponse.cs" />
+    <Compile Include="Models\DTO\OrderDetailsResponse.cs" />
     <Compile Include="Models\DTO\OrderItemRequest.cs" />
+    <Compile Include="Models\DTO\OrderItemResponse.cs" />
     <Compile Include="Models\DTO\PlaceOrderRequest.cs" />
     <Compile Include="Models\DTO\RefreshTokenRequest.cs" />
     <Compile Include="Models\DTO\MenuItemDto.cs" />

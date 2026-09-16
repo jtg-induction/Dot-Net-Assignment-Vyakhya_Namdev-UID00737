@@ -18,5 +18,8 @@
         public const string PhoneNumberAlreadyExists = "Phone Number already exists!";
         public const string PasswordMatchesError = "New Password should not be same as Current Password!";
         public const string InvalidRefreshToken = "Invalid Refresh Token Provided!";
+        public const string InvalidRestaurantId = "RestaurantId must be greater than 0!";
+        public const string RestaurantNotFound = "Restaurant Not Found!";
+        public const string RestaurantNotAvailable = "Restaurant Not Available!";
     }
 }

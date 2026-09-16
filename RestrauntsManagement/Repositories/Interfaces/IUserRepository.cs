@@ -11,6 +11,7 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         Task SaveChangesAsync();
         Task<User> GetByEmailAsync(string email);
         Task<User> GetByIdAsync(long userId);
+        Task<User> GetActiveUserAsync(long userId);
         Task<UserAddress> GetUserAddressAsync(long userId);
         Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, long userId);
         void AddUserAddress(Address address, UserAddress userAddress);

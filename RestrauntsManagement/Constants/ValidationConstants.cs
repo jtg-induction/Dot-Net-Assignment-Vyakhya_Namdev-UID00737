@@ -18,5 +18,6 @@
         public const decimal DefaultUserBalance = 1000;
         public const int RefreshTokenLength = 88;
         public const int RefreshTokenExpiryDays = 7;
+        public const int OrderItemMinimumLength = 1;
     }
 }

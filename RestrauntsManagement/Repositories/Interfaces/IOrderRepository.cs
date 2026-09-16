@@ -1,0 +1,22 @@
+﻿using DotNetRestaurantManagement.Models.Entities;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.Threading.Tasks;
+
+namespace DotNetRestaurantManagement.Repositories.Interfaces
+{
+    public interface IOrderRepository
+    {
+        ITransaction BeginTransaction(IsolationLevel isolationLevel);
+        Task<List<MenuItem>> GetMenuItemsAsync(
+            IEnumerable<long> menuItemIds,
+            long restaurantId);
+
+        void AddOrder(Order order);
+
+        void AddOrderItem(OrderItem orderItem);
+
+        Task SaveChangesAsync();
+    }
+}

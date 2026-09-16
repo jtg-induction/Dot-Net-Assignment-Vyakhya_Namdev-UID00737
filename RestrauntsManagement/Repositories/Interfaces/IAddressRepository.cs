@@ -10,6 +10,7 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         Task<Address> GetActiveUserAddressAsync(long addressId, long userId);
         Task<List<Address>> GetAllUserAddressesAsync(long userId);
         void AddUserAddress(Address address, UserAddress userAddress);
+        Task<bool> DoesAddressBelongsToUserAsync(long userId, long addressId);
         Task SaveChangesAsync();
     }
 }

@@ -23,5 +23,6 @@ namespace DotNetRestaurantManagement.Constants
         public const string RestaurantMenuListed = "Restaurant Menu Listed Successfully!";
         public const string OrderPlaced = "Order Placed Successfully!";
         public const string OrderSuccessMessage = "Order details fetched successfully!";
+        public const string OrderCancelled = "Order cancelled successfully!";
     }
 }

@@ -19,6 +19,10 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
             IEnumerable<long> menuItemIds,
             long restaurantId);
 
+        Task<Order> GetOrderAsync(
+            long orderId,
+            long userId);
+
         void AddOrder(Order order);
 
         void AddOrderItem(OrderItem orderItem);

@@ -48,6 +48,14 @@ namespace DotNetRestaurantManagement.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Order> GetOrderAsync(
+                long orderId,
+                long userId)
+        {
+            return await _context.Orders
+                .FirstOrDefaultAsync(x => x.Id == orderId && 
+                x.CustomerId == userId);
+        }
         public void AddOrder(Order order)
         {
             _context.Orders.Add(order);
@@ -59,47 +67,60 @@ namespace DotNetRestaurantManagement.Repositories
         }
 
         public async Task<OrderDetailsResponse> GetOrderDetailsAsync(
-            long orderId, long userId)
+                long orderId,
+                long userId)
         {
-            var order = await _context.Orders
+            return await _context.Orders
                 .AsNoTracking()
-                .Where(x => x.Id == orderId && x.CustomerId == userId)
-                .Select(x => new
+                .Where(x =>
+                    x.Id == orderId &&
+                    x.CustomerId == userId)
+                .Select(x => new OrderDetailsResponse
                 {
-                    x.Id,
-                    x.DeliveryAddressId,
-                    x.TotalAmount,
-                    x.Status,
-                    x.RestaurantId,
-
-                    Items = x.OrderedItems.Select(
-                        o => new
+                    OrderId = x.Id,
+                    Items = x.OrderedItems
+                        .Select(o => new OrderItemResponse
                         {
-                            o.MenuItemId,
-                            o.Price,
-                            o.Quantity
+                            MenuItemId = o.MenuItemId,
+                            Quantity = o.Quantity,
+                            Price = o.Price
                         })
+                        .ToList(),
+
+                    DeliveryAddress = new AddressResponse
+                    {
+                        Id = x.DeliveryAddress.Id,
+                        HouseNumber = x.DeliveryAddress.HouseNumber,
+                        StreetAddress = x.DeliveryAddress.StreetAddress,
+                        City = x.DeliveryAddress.City,
+                        State = x.DeliveryAddress.State,
+                        PinCode = x.DeliveryAddress.PinCode,
+                        Country = x.DeliveryAddress.Country,
+                        AddressType = (int)x.DeliveryAddress.AddressType
+                    },
+
+                    TotalAmount = x.TotalAmount,
+                    TotalItems = x.TotalItems,
+                    OrderStatus = x.Status,
+                    Restaurant = new RestaurantResponse
+                    {
+                        RestaurantId = x.Restaurant.Id,
+                        Name = x.Restaurant.Name,
+                        Email = x.Restaurant.Email,
+                        Cuisine = x.Restaurant.Cuisine.ToString(),
+
+                        Address = new RestaurantAddressDto
+                        {
+                            HouseNumber = x.Restaurant.Address.HouseNumber,
+                            StreetAddress = x.Restaurant.Address.StreetAddress,
+                            City = x.Restaurant.Address.City,
+                            State = x.Restaurant.Address.State,
+                            PinCode = x.Restaurant.Address.PinCode,
+                            Country = x.Restaurant.Address.Country
+                        }
+                    }
                 })
                 .FirstOrDefaultAsync();
-
-            if (order == null) return null;
-            return new OrderDetailsResponse
-            {
-                OrderId = orderId,
-                DeliveryAddress = order.DeliveryAddressId,
-                TotalAmount = order.TotalAmount,
-                TotalItems = order.Items.Sum(x => x.Quantity),
-                OrderStatus = order.Status,
-                RestaurantId = order.RestaurantId,
-                Items = order.Items
-                   .Select(x => new OrderItemResponse
-                   {
-                       MenuItemId = x.MenuItemId,
-                       Price = x.Price,
-                       Quantity = x.Quantity
-                   })
-                   .ToList()
-            };
         }
 
         public async Task SaveChangesAsync()

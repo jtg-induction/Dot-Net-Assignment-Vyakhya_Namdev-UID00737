@@ -175,8 +175,94 @@ namespace DotNetRestaurantManagement.Services
             long orderId, 
             long userId)
         {
-            return await _orderRepository
-                .GetOrderDetailsAsync(orderId, userId);
+            var order = await _orderRepository.GetOrderDetailsAsync(orderId, userId);
+            if (order == null)
+            {
+                throw new ApiException(
+                    HttpStatusCode.NotFound,
+                    ErrorMessages.OrderNotFound);
+            }
+
+            return order;
+        }
+
+        public static bool CanCancelOrder(OrderStatus status)
+        {
+            return status == OrderStatus.Placed ||
+                   status == OrderStatus.Accepted;
+        }
+
+        public async Task<CancelOrderResponse> CancelOrderAsync(
+           long orderId,
+           long userId)
+        {
+            using (var transaction = _orderRepository.BeginTransaction(IsolationLevel.Serializable))
+            {
+                try
+                {
+                    var order = await _orderRepository.GetOrderAsync(
+                        orderId,
+                        userId);
+
+                    if (order == null)
+                    {
+                        throw new ApiException(
+                            HttpStatusCode.NotFound,
+                            ErrorMessages.OrderNotFound);
+                    }
+
+                    var user = await _userRepository.GetByIdAsync(userId);
+                    if (user == null)
+                    {
+                        throw new ApiException(
+                            HttpStatusCode.Unauthorized,
+                            ErrorMessages.UserNotFound);
+                    }
+                    if (!user.IsActive)
+                    {
+                        throw new ApiException(
+                            HttpStatusCode.Forbidden,
+                            ErrorMessages.AccessDenied);
+                    }
+
+                    if (!CanCancelOrder(order.Status))
+                    {
+                        throw new ApiException(
+                            HttpStatusCode.BadRequest,
+                            ErrorMessages.OrderCannotBeCancelled);
+                    }
+
+                    var menuItemIds = order.OrderedItems
+                        .Select(x => x.MenuItemId)
+                        .ToList();
+
+                    var menuItems = await _orderRepository.GetMenuItemsAsync(
+                        menuItemIds,
+                        order.RestaurantId);
+
+                    var menuItemsById = menuItems.ToDictionary(x => x.Id);
+                    foreach (var orderItem in order.OrderedItems)
+                    {
+                        var menuItem = menuItemsById[orderItem.MenuItemId];
+                        menuItem.QuantityAvailable += orderItem.Quantity;
+                    }
+
+                    user.Balance += order.TotalAmount;
+                    order.Status = OrderStatus.Cancelled;
+                    await _orderRepository.SaveChangesAsync();
+                    transaction.Commit();
+                    return new CancelOrderResponse
+                    {
+                        OrderId = orderId,
+                        OrderStatus = OrderStatus.Cancelled
+                    };
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
     }
 }

@@ -38,20 +38,29 @@ namespace DotNetRestaurantManagement.Controllers
         public async Task<IHttpActionResult> GetOrderDetails(long orderId)
         {
             long userId = ClaimsHelper.GetUserId(User);
-            var order = await _orderService
-                .GetOrderDetailsAsync(orderId, userId);
-            if(order == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.NotFound, ErrorMessages.OrderNotFound
-                    );
-            }
+            var order = await _orderService.GetOrderDetailsAsync(orderId, userId);
             return Ok(new ApiResponse<OrderDetailsResponse>
             (
                 true,
                 order,
                 SuccessMessages.OrderSuccessMessage
             ));
+        }
+
+        [HttpPatch]
+        [Route("{orderId:long}")]
+        [JwtAuthorize]
+        public async Task<IHttpActionResult> CancelOrder(long orderId)
+        {
+            long userId = ClaimsHelper.GetUserId(User);
+            var result = await _orderService.CancelOrderAsync(
+                orderId,
+                userId);
+
+            return Ok(new ApiResponse<CancelOrderResponse>(
+                            true,
+                            result,
+                            SuccessMessages.OrderCancelled));
         }
     }
 }

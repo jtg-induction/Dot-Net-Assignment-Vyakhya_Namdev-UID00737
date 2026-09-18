@@ -1,7 +1,11 @@
 ﻿using DotNetRestaurantManagement.Data;
+using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Repositories.Interfaces;
+using System.Data;
+using System.Data.Entity;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Repositories.Implementations
 {
@@ -11,6 +15,12 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
         public RestaurantRepository(RestaurantDbContext context)
         {
             _context = context;
+        }
+
+        public ITransaction BeginTransaction()
+        {
+            var transaction = _context.Database.BeginTransaction();
+            return new Transaction(transaction);
         }
 
         public IQueryable<Restaurant> GetActiveRestaurants()
@@ -30,6 +40,26 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
         public Restaurant GetById(long restaurantId)
         {
             return _context.Restaurants.First(r => r.Id == restaurantId);
+        }
+
+        public async Task<bool> EmailExistsAsync(string email)
+        {
+            return await _context.Restaurants.AnyAsync(restaurant => restaurant.Email == email);
+        }
+
+        public void AddRestaurantAddress(Address address)
+        {
+            _context.Addresses.Add(address);
+        }
+
+        public void Add(Restaurant restaurant)
+        {
+            _context.Restaurants.Add(restaurant);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

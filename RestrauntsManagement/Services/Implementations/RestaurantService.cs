@@ -2,10 +2,13 @@
 using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
+using DotNetRestaurantManagement.Models.Entities;
+using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Interfaces;
 using System.Net;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Services.Implementations
@@ -13,9 +16,11 @@ namespace DotNetRestaurantManagement.Services.Implementations
     public class RestaurantService : IRestaurantService
     {
         private readonly IRestaurantRepository _restaurantRepository;
-        public RestaurantService(IRestaurantRepository restaurantRepository)
+        private readonly IUserRepository _userRepository;
+        public RestaurantService(IRestaurantRepository restaurantRepository, IUserRepository userRepository)
         {
             _restaurantRepository = restaurantRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<PaginationResult<RestaurantDto>> GetRestaurantsDetailsAsync(PaginationRequest request)
@@ -58,6 +63,111 @@ namespace DotNetRestaurantManagement.Services.Implementations
                                              })
                                              .OrderBy(x => x.Id);
             return await PaginationHelper.CreateAsync(query, request);
+        }
+        private async Task<User> OnboardRestaurantOwner(OwnerRequest ownerRequest)
+        {
+            User owner;
+            if (ownerRequest.UserId.HasValue)
+            {
+                owner = await _userRepository.GetByIdAsync(
+                    ownerRequest.UserId.Value);
+
+                if (owner == null)
+                {
+                    throw new ApiException(
+                        HttpStatusCode.NotFound,
+                        ErrorMessages.UserNotFound);
+                }
+
+                owner.Role = UserRole.Owner;
+                return owner;
+            }
+
+            string userNormalizedEmail = ownerRequest.Email.Trim();
+            string normalizedPhoneNumber = ownerRequest.PhoneNumber.Trim();
+
+            bool existingUser =
+                await _userRepository.EmailExistsAsync(userNormalizedEmail);
+
+            if (existingUser)
+            {
+                throw new ApiException(
+                    HttpStatusCode.Conflict,
+                    ErrorMessages.UserAlreadyExists);
+            }
+
+            bool existingPhoneNumber =
+                await _userRepository.PhoneNumberExistsAsync(
+                    normalizedPhoneNumber);
+
+            if (existingPhoneNumber)
+            {
+                throw new ApiException(
+                    HttpStatusCode.Conflict,
+                    ErrorMessages.PhoneNumberAlreadyExists);
+            }
+
+            owner = new User
+            {
+                Name = ownerRequest.Name.Trim(),
+                Email = userNormalizedEmail,
+                PhoneNumber = normalizedPhoneNumber,
+                Password = PasswordHashingHelper.Hash(ownerRequest.Password),
+                Role = UserRole.Owner
+            };
+
+            _userRepository.AddUser(owner);
+            return owner;
+        }
+
+        public async Task<OnboardRestaurantResponse> OnboardRestaurant(
+            OnboardRestaurantRequest request)
+        {
+            if (request.Owner == null)
+            {
+                throw new ApiException(
+                    HttpStatusCode.BadRequest,
+                    ErrorMessages.OwnerDetailsRequired);
+            }
+
+            string normalizedEmail = request.Email.Trim();
+
+            if (await _restaurantRepository.EmailExistsAsync(normalizedEmail))
+            {
+                throw new ApiException(
+                    HttpStatusCode.Conflict,
+                    ErrorMessages.RestaurantAlreadyExists);
+            }
+
+            User owner = await OnboardRestaurantOwner(request.Owner);
+            var address = new Address
+            {
+                HouseNumber = request.Address.HouseNumber.Trim(),
+                StreetAddress = request.Address.StreetAddress.Trim(),
+                City = request.Address.City.Trim(),
+                State = request.Address.State.Trim(),
+                PinCode = request.Address.PinCode.Trim(),
+                Country = request.Address.Country.Trim(),
+                AddressType = AddressType.Work
+            };
+
+            _restaurantRepository.AddRestaurantAddress(address);
+
+            var restaurant = new Restaurant
+            {
+                Name = request.Name.Trim(),
+                Email = normalizedEmail,
+                Cuisine = request.Cuisine,
+                Owner = owner,
+                Address = address
+            };
+
+            _restaurantRepository.Add(restaurant);
+            await _restaurantRepository.SaveChangesAsync();
+            return new OnboardRestaurantResponse
+            {
+                restaurantId = restaurant.Id
+            };
         }
     }
 }

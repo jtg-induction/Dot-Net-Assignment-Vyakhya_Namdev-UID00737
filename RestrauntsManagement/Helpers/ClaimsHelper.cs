@@ -19,6 +19,18 @@ namespace DotNetRestaurantManagement.Helpers
             return userId;
         }
 
+        public static string GetUserRole(IPrincipal user)
+        {
+            var claimsPrincipal = user as ClaimsPrincipal;
+            var claim = claimsPrincipal?.FindFirst(ClaimTypes.Role);
+            if (claim == null || string.IsNullOrWhiteSpace(claim.Value))
+            {
+                throw new UnauthorizedAccessException(ErrorMessages.RoleMissingClaim);
+            }
+
+            return claim.Value;
+        }
+
         public static long GetRefreshTokenId(IPrincipal user)
         {
             var claimsPrincipal = user as ClaimsPrincipal;

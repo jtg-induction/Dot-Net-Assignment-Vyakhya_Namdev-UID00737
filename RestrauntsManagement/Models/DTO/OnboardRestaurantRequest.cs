@@ -3,12 +3,18 @@ using System.ComponentModel.DataAnnotations;
 
 namespace DotNetRestaurantManagement.Models.DTO
 {
-    public class RestaurantDto
+    public class OnboardRestaurantRequest
     {
-        public long Id { get; set; }
+        [Required]
         public string Name { get; set; }
+        [Required]
         public string Email { get; set; }
-        public RestaurantAddressDto Address { get; set; }
+        [Required]
+        [EnumDataType(typeof(CuisineType))]
         public CuisineType Cuisine { get; set; }
+        [Required]
+        public AddressRequest Address { get; set; }
+        [Required]
+        public OwnerRequest Owner { get; set; }
     }
 }

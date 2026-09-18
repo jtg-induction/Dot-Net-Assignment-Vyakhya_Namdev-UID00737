@@ -10,5 +10,6 @@ namespace DotNetRestaurantManagement.Constants
         public const string LogoutSuccessMessage = "Logged out successfully!";
         public const string OrderSuccessMessage = "Order details fetched successfully!";
         public const string OrderCancelled = "Order cancelled successfully!";
+        public const string RestaurantOnboarded = "Restaurant onboarded successfully!";
     }
 }

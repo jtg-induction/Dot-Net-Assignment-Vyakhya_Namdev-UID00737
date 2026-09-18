@@ -32,5 +32,13 @@
         public const string InsufficientBalance = "Insufficeint User balance!";
         public const string OrderNotFound = "Order not found!";
         public const string OrderCannotBeCancelled = "Order cannot be cancelled!";
+        public const string RestaurantAlreadyExists = "Restaurant already exists!";
+        public const string OwnerNotFound = "Owner Not Found!";
+        public const string UserAlreadyExists = "User with this email already exists!";
+        public const string OwnerDetailsRequired = "Owner details are required!";
+        public const string ExistingUserError = "For an existing user, provide UserId only!";
+        public const string RequiredOwnerDetails = "Name, email, phone number and password are required for a new owner!";
+        public const string NotAuthenticated = "You are not authenticated for this route!";
+        public const string RoleMissingClaim = "User Role is missing!";
     }
 }

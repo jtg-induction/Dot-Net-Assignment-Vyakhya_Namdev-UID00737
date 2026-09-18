@@ -1,6 +1,11 @@
 ﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Exceptions;
+using DotNetRestaurantManagement.Filters;
+using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
+using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Services.Interfaces;
+using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -34,6 +39,22 @@ namespace DotNetRestaurantManagement.Controllers
             if (restaurantId <= 0) return BadRequest(ErrorMessages.InvalidRestaurantId);
             var result = await _restaurantService.GetRestaurantMenuAsync(restaurantId, request);
             return Ok(new ApiResponse<PaginationResult<MenuItemDto>>(true, result, SuccessMessages.RestaurantMenuListed));
+        }
+
+        /// Onboard Restaurant
+        [JwtAuthorize]
+        [HttpPost]
+        [Route("")]
+        public async Task<IHttpActionResult> OnboardRestaurant(OnboardRestaurantRequest request)
+        {
+            var userId = ClaimsHelper.GetUserId(User);
+            var role = ClaimsHelper.GetUserRole(User);
+            if (role != UserRole.SuperAdmin.ToString())
+            {
+                throw new ApiException(HttpStatusCode.Forbidden, ErrorMessages.NotAuthenticated);
+            }
+            var response = await _restaurantService.OnboardRestaurant(request);
+            return Created("", new ApiResponse<OnboardRestaurantResponse>(true, response, SuccessMessages.RestaurantOnboarded));
         }
     }
 }

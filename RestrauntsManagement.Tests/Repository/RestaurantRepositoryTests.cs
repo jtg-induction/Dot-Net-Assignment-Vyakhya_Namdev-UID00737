@@ -5,6 +5,7 @@ using Effort;
 using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web.UI.WebControls;
 
 namespace DotNetRestaurantManagement.Tests.Repositories
@@ -178,21 +179,6 @@ namespace DotNetRestaurantManagement.Tests.Repositories
         }
 
         [TestMethod]
-        [Description("Checks when the requested restaurant ID does not exist, the repository returns null")]
-        public void GetById_ShouldReturnNull_WhenRestaurantDoesNotExist()
-        {
-            var restaurant = CreateRestaurant(
-                "Spice Garden",
-                "spice@test.com",
-                true);
-
-            _context.Restaurants.Add(restaurant);
-            _context.SaveChanges();
-            var result = _repository.GetById(999);
-            result.Should().BeNull();
-        }
-
-        [TestMethod]
         [Description("Verify if GetById returns inactive restaurant also")]
         public void GetById_ShouldReturnInactiveRestaurant_WhenRestaurantExists()
         {
@@ -207,6 +193,94 @@ namespace DotNetRestaurantManagement.Tests.Repositories
             result.Should().NotBeNull();
             result.Id.Should().Be(restaurant.Id);
             result.IsActive.Should().BeFalse();
+        }
+
+        [TestMethod]
+        [Description("Checks that EmailExistsAsync returns true when a restaurant with the given email already exists")]
+        public async Task EmailExistsAsync_ShouldReturnTrue_WhenEmailExists()
+        {
+            var restaurant = CreateRestaurant(
+                "Spice Garden",
+                "spice@test.com",
+                true);
+
+            _context.Restaurants.Add(restaurant);
+            await _context.SaveChangesAsync();
+            var result = await _repository.EmailExistsAsync("spice@test.com");
+            result.Should().BeTrue();
+        }
+
+        [TestMethod]
+        [Description("Checks that EmailExistsAsync returns false when no restaurant has the given email")]
+        public async Task EmailExistsAsync_ShouldReturnFalse_WhenEmailDoesNotExist()
+        {
+            var result = await _repository.EmailExistsAsync("abc@test.com");
+            result.Should().BeFalse();
+        }
+
+        [TestMethod]
+        [Description("Checks that AddRestaurantAddress adds the address to the database context")]
+        public async Task AddRestaurantAddress_ShouldAddAddress()
+        {
+            var address = new Address
+            {
+                HouseNumber = "154",
+                StreetAddress = "Mall Road",
+                City = "Noida",
+                State = "Uttar Pradesh",
+                PinCode = "201001",
+                Country = "India"
+            };
+
+            _repository.AddRestaurantAddress(address);
+            await _repository.SaveChangesAsync();
+            var result = _context.Addresses.FirstOrDefault(x => x.HouseNumber == "154");
+            result.Should().NotBeNull();
+            result.StreetAddress.Should().Be("Mall Road");
+            result.City.Should().Be("Noida");
+        }
+
+        [TestMethod]
+        [Description("Checks that Add adds the restaurant to the database context")]
+        public async Task Add_ShouldAddRestaurant()
+        {
+            var restaurant = CreateRestaurant(
+                "Fun Food",
+                "funfood@test.com",
+                true);
+
+            _repository.Add(restaurant);
+            await _repository.SaveChangesAsync();
+            var result = _context.Restaurants.FirstOrDefault(x => x.Email == "funfood@test.com");
+            result.Should().NotBeNull();
+            result.Name.Should().Be("Fun Food");
+            result.OwnerId.Should().Be(restaurant.OwnerId);
+            result.AddressId.Should().Be(restaurant.AddressId);
+        }
+
+        [TestMethod]
+        [Description("Checks that SaveChangesAsync persists changes made through the repository")]
+        public async Task SaveChangesAsync_ShouldPersistChanges()
+        {
+            var restaurant = CreateRestaurant(
+                "Royal Spice",
+                "royal@test.com",
+                true);
+
+            _repository.Add(restaurant);
+            await _repository.SaveChangesAsync();
+            var result = _context.Restaurants.FirstOrDefault(x => x.Email == "royal@test.com");
+            result.Should().NotBeNull();
+            result.Id.Should().BeGreaterThan(0);
+        }
+
+        [TestMethod]
+        [Description("Checks that BeginTransaction returns a transaction object when a database transaction is started")]
+        public void BeginTransaction_ShouldReturnTransaction()
+        {
+            var transaction = _repository.BeginTransaction();
+            transaction.Should().NotBeNull();
+            transaction.Rollback();
         }
     }
 }

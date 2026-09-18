@@ -30,5 +30,7 @@
         public const string DuplicateMenuItemException = "Duplicate menu items are not allowed!";
         public const string ItemsMustBelongToSameRestaurant = "All items in an order must belong to the same restaurant";
         public const string InsufficientBalance = "Insufficeint User balance!";
+        public const string OrderNotFound = "Order not found!";
+        public const string OrderCannotBeCancelled = "Order cannot be cancelled!";
     }
 }

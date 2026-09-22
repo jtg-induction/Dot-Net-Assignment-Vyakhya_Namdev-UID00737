@@ -1,4 +1,5 @@
-﻿using DotNetRestaurantManagement.Controllers;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Controllers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Services.Interfaces;
 using FluentAssertions;
@@ -160,10 +161,10 @@ namespace RestrauntsManagement.Tests.Controllers
 
             var okResult =
                 result.Should()
-                    .BeOfType<OkNegotiatedContentResult<bool>>()
+                    .BeOfType<OkNegotiatedContentResult<ApiResponse<object>>>()
                     .Subject;
 
-            okResult.Content.Should().BeTrue();
+            okResult.Content.Success.Should().BeTrue();
 
             _userServiceMock.Verify(
                 x => x.ChangePasswordAsync(1, request),
@@ -217,130 +218,6 @@ namespace RestrauntsManagement.Tests.Controllers
                 x => x.ChangePasswordAsync(
                     It.IsAny<long>(),
                     It.IsAny<ChangePasswordRequest>()),
-                Times.Never);
-        }
-
-        [TestMethod]
-        public async Task AddAddress_ValidRequest_ReturnsCreated()
-        {
-            SetUserClaims(1);
-
-            var request = new AddressRequest
-            {
-                HouseNumber = "12A",
-                StreetAddress = "MG Road",
-                City = "Noida",
-                State = "Uttar Pradesh",
-                PinCode = "201301",
-                Country = "India",
-                AddressType = 1
-            };
-
-            var response = new AddressResponse
-            {
-                Id = 10,
-                HouseNumber = "12A",
-                StreetAddress = "MG Road",
-                City = "Noida",
-                State = "Uttar Pradesh",
-                PinCode = "201301",
-                Country = "India",
-                AddressType = 1
-            };
-
-            _userServiceMock
-                .Setup(x => x.AddAddressAsync(1, request))
-                .ReturnsAsync(response);
-
-            var result = await _controller.AddAddress(request);
-
-            var createdResult =
-                result.Should()
-                    .BeOfType<NegotiatedContentResult<AddressResponse>>()
-                    .Subject;
-
-            createdResult.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
-            createdResult.Content.Should().Be(response);
-
-            _userServiceMock.Verify(
-                x => x.AddAddressAsync(1, request),
-                Times.Once);
-        }
-
-        [TestMethod]
-        public async Task AddAddress_ValidClaims_PassesCorrectUserIdAndRequest()
-        {
-            SetUserClaims(7);
-
-            var request = new AddressRequest
-            {
-                HouseNumber = "12A",
-                StreetAddress = "MG Road",
-                City = "Noida",
-                State = "Uttar Pradesh",
-                PinCode = "201301",
-                Country = "India",
-                AddressType = 1
-            };
-
-            var response = new AddressResponse
-            {
-                Id = 10,
-                HouseNumber = "12A",
-                StreetAddress = "MG Road",
-                City = "Noida",
-                State = "Uttar Pradesh",
-                PinCode = "201301",
-                Country = "India",
-                AddressType = 1
-            };
-
-            _userServiceMock
-                .Setup(x => x.AddAddressAsync(
-                    It.IsAny<long>(),
-                    It.IsAny<AddressRequest>()))
-                .ReturnsAsync(response);
-
-            await _controller.AddAddress(request);
-
-            _userServiceMock.Verify(
-                x => x.AddAddressAsync(
-                    7,
-                    It.Is<AddressRequest>(r =>
-                        r.HouseNumber == "12A" &&
-                        r.StreetAddress == "MG Road" &&
-                        r.City == "Noida" &&
-                        r.State == "Uttar Pradesh" &&
-                        r.PinCode == "201301" &&
-                        r.Country == "India" &&
-                        r.AddressType == 1)),
-                Times.Once);
-        }
-
-        [TestMethod]
-        public async Task AddAddress_MissingUserIdClaim_ThrowsUnauthorizedAccessException()
-        {
-            SetUserWithoutUserIdClaim();
-
-            var request = new AddressRequest
-            {
-                HouseNumber = "12A",
-                StreetAddress = "MG Road",
-                City = "Noida",
-                State = "Uttar Pradesh",
-                PinCode = "201301",
-                Country = "India",
-                AddressType = 1
-            };
-
-            Func<Task> action = () => _controller.AddAddress(request);
-
-            await action.Should().ThrowAsync<UnauthorizedAccessException>();
-
-            _userServiceMock.Verify(
-                x => x.AddAddressAsync(
-                    It.IsAny<long>(),
-                    It.IsAny<AddressRequest>()),
                 Times.Never);
         }
     }

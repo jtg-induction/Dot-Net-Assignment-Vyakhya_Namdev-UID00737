@@ -31,9 +31,9 @@ namespace DotNetRestaurantManagement.Controllers
         // <returns>A response containing the newly created account details.</returns>
         [HttpPost]
         [Route("signup")]
-        public async Task<IHttpActionResult> Signup(SignupRequest request){
+        public async Task<IHttpActionResult> Signup([FromBody] SignupRequest request){
             SignupResponse response = await _authService.Signup(request);
-            return Ok(new ApiResponse<SignupResponse>(true, response));
+            return Created("",new ApiResponse<SignupResponse>(true, response, SuccessMessages.UserCreated));
         }
 
         /// <summary>
@@ -43,30 +43,24 @@ namespace DotNetRestaurantManagement.Controllers
         /// <returns>The authenticated user's basic details.</returns>
         [HttpPost]
         [Route("login")]
-        public async Task<IHttpActionResult> Login(LoginRequest request)
+        public async Task<IHttpActionResult> Login([FromBody] LoginRequest request)
         {
             var response = await _authService.LoginAsync(request);
-            return Ok(new ApiResponse<LoginResponse>(true,response));
+            return Ok(new ApiResponse<LoginResponse>(true, response, SuccessMessages.UserLoggedIn));
         }
 
         /// Generates new access and refresh tokens using the refresh token cookie.
         /// A response indicating that the tokens were refreshed successfully.
         [HttpPost]
         [Route("refresh-token")]
-        public async Task<IHttpActionResult> RefreshToken(RefreshTokenRequest request)
+        public async Task<IHttpActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.RefreshToken))
-            {
-                throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
-            }
-
             var response = await _authService.RefreshTokenAsync(request.RefreshToken);
-            return Ok(new ApiResponse<RefreshTokenResponse>(true,response));
+            return Ok(new ApiResponse<RefreshTokenResponse>(true, response,SuccessMessages.TokenRefreshed));
         }
 
         /// Logs out the current user and removes the authentication cookies.
         /// A response indicating that the user was logged out successfully.
-        [JwtAuthorize]
         [HttpPost]
         [Route("logout")]
         public async Task<IHttpActionResult> Logout()
@@ -75,7 +69,7 @@ namespace DotNetRestaurantManagement.Controllers
             var refreshTokenId = ClaimsHelper.GetRefreshTokenId(User);
             await _authService.LogoutAsync(userId, refreshTokenId);
 
-            return Ok(true);
+            return Ok(new ApiResponse<object>(true, SuccessMessages.LogoutSuccessMessage));
         }
     }
 }

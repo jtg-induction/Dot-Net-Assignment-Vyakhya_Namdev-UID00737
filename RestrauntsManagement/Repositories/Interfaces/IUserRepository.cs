@@ -1,4 +1,5 @@
 ﻿using DotNetRestaurantManagement.Models.Entities;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Repositories.Interfaces
@@ -11,8 +12,6 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         Task SaveChangesAsync();
         Task<User> GetByEmailAsync(string email);
         Task<User> GetByIdAsync(long userId);
-        Task<UserAddress> GetUserAddressAsync(long userId);
         Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, long userId);
-        void AddUserAddress(Address address, UserAddress userAddress);
     }
 }

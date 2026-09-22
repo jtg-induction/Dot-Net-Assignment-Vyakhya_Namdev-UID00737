@@ -220,22 +220,8 @@ namespace DotNetRestaurantManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Verifies that UpdateProfileAsync throws ArgumentNullException when the request is null.")]
-        public async Task UpdateProfileAsync_NullRequest_ThrowsArgumentNullException()
-        {
-            Func<Task> action = () =>
-                _userService.UpdateProfileAsync(1, null);
-
-            await action.Should().ThrowAsync<ArgumentNullException>();
-
-            _userRepositoryMock.Verify(
-                x => x.GetByIdAsync(It.IsAny<long>()),
-                Times.Never);
-        }
-
-        [TestMethod]
-        [Description("Verifies that UpdateProfileAsync throws Unauthorized when the user does not exist.")]
-        public async Task UpdateProfileAsync_UserDoesNotExist_ThrowsUnauthorized()
+        [Description("Verifies that UpdateProfileAsync throws Not Found when the user does not exist.")]
+        public async Task UpdateProfileAsync_UserDoesNotExist_ThrowsNotFound()
         {
             _userRepositoryMock
                 .Setup(x => x.GetByIdAsync(1))
@@ -283,7 +269,7 @@ namespace DotNetRestaurantManagement.Tests.Services
                 await action.Should().ThrowAsync<ApiException>();
 
             exception.Which.StatusCode
-                .Should().Be(HttpStatusCode.Unauthorized);
+                .Should().Be(HttpStatusCode.Forbidden);
 
             _userRepositoryMock.Verify(
                 x => x.SaveChangesAsync(),
@@ -440,7 +426,7 @@ namespace DotNetRestaurantManagement.Tests.Services
                 await action.Should().ThrowAsync<ApiException>();
 
             exception.Which.StatusCode
-                .Should().Be(HttpStatusCode.Unauthorized);
+                .Should().Be(HttpStatusCode.BadRequest);
 
             _userRepositoryMock.Verify(
                 x => x.SaveChangesAsync(),
@@ -470,192 +456,10 @@ namespace DotNetRestaurantManagement.Tests.Services
                 await action.Should().ThrowAsync<ApiException>();
 
             exception.Which.StatusCode
-                .Should().Be(HttpStatusCode.NoContent);
+                .Should().Be(HttpStatusCode.BadRequest);
 
             _userRepositoryMock.Verify(
                 x => x.SaveChangesAsync(),
-                Times.Never);
-        }
-
-        [TestMethod]
-        [Description("Verifies that AddAddressAsync successfully creates and associates an address with the user.")]
-        public async Task AddAddressAsync_ValidRequest_ReturnsAddressResponse()
-        {
-            var user = CreateActiveUser();
-            var request = GetValidAddressRequest();
-
-            _userRepositoryMock
-                .Setup(x => x.GetByIdAsync(1))
-                .ReturnsAsync(user);
-
-            _userRepositoryMock
-                .Setup(x => x.GetUserAddressAsync(1))
-                .ReturnsAsync((UserAddress)null);
-
-            _userRepositoryMock
-                .Setup(x => x.AddUserAddress(
-                    It.IsAny<Address>(),
-                    It.IsAny<UserAddress>()));
-
-            var result =
-                await _userService.AddAddressAsync(1, request);
-
-            result.Should().NotBeNull();
-            result.Id.Should().Be(10);
-            result.HouseNumber.Should().Be("12A");
-            result.StreetAddress.Should().Be("MG Road");
-            result.City.Should().Be("Noida");
-            result.State.Should().Be("Uttar Pradesh");
-            result.PinCode.Should().Be("201301");
-            result.Country.Should().Be("India");
-            result.AddressType.Should().Be((int)AddressType.Home);
-
-            _userRepositoryMock.Verify(
-                x => x.AddUserAddress(
-                    It.IsAny<Address>(),
-                    It.IsAny<UserAddress>()),
-                Times.Once);
-
-            _userRepositoryMock.Verify(
-                x => x.AddUserAddress(
-                    It.Is<Address>(a =>
-                        a.HouseNumber == "12A" &&
-                        a.StreetAddress == "MG Road" &&
-                        a.City == "Noida"),
-                    It.Is<UserAddress>(ua =>
-                        ua.UserId == 1 &&
-                        ua.IsActive)),
-                Times.Once);
-        }
-
-        [TestMethod]
-        [Description("Verifies that AddAddressAsync trims address fields before creating the address.")]
-        public async Task AddAddressAsync_RequestContainsSpaces_TrimsAddressFields()
-        {
-            var user = CreateActiveUser();
-
-            var request = new AddressRequest
-            {
-                HouseNumber = " 12A ",
-                StreetAddress = " MG Road ",
-                City = " Noida ",
-                State = " Uttar Pradesh ",
-                PinCode = " 201301 ",
-                Country = " India ",
-                AddressType = (int)AddressType.Home
-            };
-
-            Address addedAddress = null;
-
-            _userRepositoryMock
-                .Setup(x => x.GetByIdAsync(1))
-                .ReturnsAsync(user);
-
-            _userRepositoryMock
-                .Setup(x => x.GetUserAddressAsync(1))
-                .ReturnsAsync((UserAddress)null);
-
-            _userRepositoryMock
-                .Setup(x => x.AddUserAddress(
-                    It.IsAny<Address>(),
-                    It.IsAny<UserAddress>()));
-
-            await _userService.AddAddressAsync(1, request);
-
-            addedAddress.Should().NotBeNull();
-            addedAddress.HouseNumber.Should().Be("12A");
-            addedAddress.StreetAddress.Should().Be("MG Road");
-            addedAddress.City.Should().Be("Noida");
-            addedAddress.State.Should().Be("Uttar Pradesh");
-            addedAddress.PinCode.Should().Be("201301");
-            addedAddress.Country.Should().Be("India");
-        }
-
-        [TestMethod]
-        [Description("Verifies that AddAddressAsync deactivates the existing active address before adding a new address.")]
-        public async Task AddAddressAsync_ExistingAddress_DeactivatesPreviousAddress()
-        {
-            var user = CreateActiveUser();
-
-            var currentAddress = new UserAddress
-            {
-                AddressId = 5,
-                UserId = 1,
-                IsActive = true
-            };
-
-            var request = GetValidAddressRequest();
-
-            _userRepositoryMock
-                .Setup(x => x.GetByIdAsync(1))
-                .ReturnsAsync(user);
-
-            _userRepositoryMock
-                .Setup(x => x.GetUserAddressAsync(1))
-                .ReturnsAsync(currentAddress);
-
-            _userRepositoryMock
-                .Setup(x => x.AddUserAddress(
-                    It.IsAny<Address>(),
-                    It.IsAny<UserAddress>()));
-
-            await _userService.AddAddressAsync(1, request);
-
-            currentAddress.IsActive.Should().BeFalse();
-        }
-
-        [TestMethod]
-        [Description("Verifies that AddAddressAsync throws Unauthorized when the user does not exist.")]
-        public async Task AddAddressAsync_UserDoesNotExist_ThrowsUnauthorized()
-        {
-            _userRepositoryMock
-                .Setup(x => x.GetByIdAsync(1))
-                .ReturnsAsync((User)null);
-
-            var request = GetValidAddressRequest();
-
-            Func<Task> action = () =>
-                _userService.AddAddressAsync(1, request);
-
-            var exception =
-                await action.Should().ThrowAsync<ApiException>();
-
-            exception.Which.StatusCode
-                .Should().Be(HttpStatusCode.Unauthorized);
-
-            _userRepositoryMock.Verify(
-                x => x.AddUserAddress(
-                    It.IsAny<Address>(),
-                    It.IsAny<UserAddress>()),
-                Times.Never);
-        }
-
-        [TestMethod]
-        [Description("Verifies that AddAddressAsync throws Unauthorized when the user is inactive.")]
-        public async Task AddAddressAsync_InactiveUser_ThrowsUnauthorized()
-        {
-            var user = CreateActiveUser();
-            user.IsActive = false;
-
-            _userRepositoryMock
-                .Setup(x => x.GetByIdAsync(1))
-                .ReturnsAsync(user);
-
-            var request = GetValidAddressRequest();
-
-            Func<Task> action = () =>
-                _userService.AddAddressAsync(1, request);
-
-            var exception =
-                await action.Should().ThrowAsync<ApiException>();
-
-            exception.Which.StatusCode
-                .Should().Be(HttpStatusCode.Unauthorized);
-
-            _userRepositoryMock.Verify(
-                x => x.AddUserAddress(
-                    It.IsAny<Address>(),
-                    It.IsAny<UserAddress>()),
                 Times.Never);
         }
 
@@ -676,7 +480,7 @@ namespace DotNetRestaurantManagement.Tests.Services
             var exception = await act.Should().ThrowAsync<ApiException>();
 
             exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-            exception.Which.Message.Should().Be(ErrorMessages.UserNotFound);
+            exception.Which.Message.Should().Be(ErrorMessages.NotAuthorized);
 
             _userRepositoryMock.Verify(
                 x => x.GetByIdAsync((int)userId),
@@ -713,8 +517,8 @@ namespace DotNetRestaurantManagement.Tests.Services
 
             var exception = await act.Should().ThrowAsync<ApiException>();
 
-            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-            exception.Which.Message.Should().Be(ErrorMessages.UserNotFound);
+            exception.Which.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+            exception.Which.Message.Should().Be(ErrorMessages.AccessDenied);
 
             _refreshTokenRepositoryMock.Verify(
                 x => x.GetByIdAsync(It.IsAny<long>()),
@@ -733,79 +537,28 @@ namespace DotNetRestaurantManagement.Tests.Services
         [Description("Verifies that DeactivateAccountAsync throws BadRequest when the refresh token ID is invalid")]
         public async Task DeactivateAccountAsync_InvalidRefreshTokenId_ThrowsApiException()
         {
-            long userId = 1;
-            long refreshTokenId = 0;
-
-            var user = CreateActiveUser();
-
+            long userId = 1; 
+            long refreshTokenId = 0; 
+            var user = CreateActiveUser(); 
+            
             _userRepositoryMock
-                .Setup(x => x.GetByIdAsync((int)userId))
-                .ReturnsAsync(user);
-
-            Func<Task> act = async () =>
-                await _userService.DeactivateAccountAsync(userId, refreshTokenId);
-
-            var exception = await act.Should().ThrowAsync<ApiException>();
-
-            exception.Which.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-            exception.Which.Message.Should().Be(ErrorMessages.InvalidRefreshToken);
-
-            user.IsActive.Should().BeFalse();
-
-            _refreshTokenRepositoryMock.Verify(
-                x => x.GetByIdAsync(It.IsAny<long>()),
-                Times.Never);
-
-            _refreshTokenRepositoryMock.Verify(
-                x => x.Delete(It.IsAny<RefreshToken>()),
-                Times.Never);
-
-            _userRepositoryMock.Verify(
-                x => x.SaveChangesAsync(),
-                Times.Never);
-        }
-
-        [TestMethod]
-        [Description("Verifies that DeactivateAccountAsync throws ApiException when the refresh token belongs to another user.")]
-        public async Task DeactivateAccountAsync_RefreshTokenBelongsToAnotherUser_ThrowsApiException()
-        {
-            long userId = 1;
-            long refreshTokenId = 10;
-
-            var user = CreateActiveUser();
-            var refreshToken = CreateValidRefreshToken(user, "refresh-token");
-
-            refreshToken.UserId = 2;
-
-            _userRepositoryMock
-                .Setup(x => x.GetByIdAsync((int)userId))
-                .ReturnsAsync(user);
-
+                .Setup(x => x.GetByIdAsync(userId))
+                .ReturnsAsync(user); 
+            
+            await _userService.DeactivateAccountAsync(userId, refreshTokenId); 
+            user.IsActive.Should().BeFalse(); 
             _refreshTokenRepositoryMock
-                .Setup(x => x.GetByIdAsync(refreshTokenId))
-                .ReturnsAsync(refreshToken);
-
-            Func<Task> act = async () =>
-                await _userService.DeactivateAccountAsync(userId, refreshTokenId);
-
-            var exception = await act.Should().ThrowAsync<ApiException>();
-
-            exception.Which.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-            exception.Which.Message.Should().Be(ErrorMessages.InvalidRefreshToken);
-
-            user.IsActive.Should().BeFalse();
-
-            _refreshTokenRepositoryMock.Verify(
-                x => x.GetByIdAsync(refreshTokenId),
+                .Verify(x => 
+                x.GetByIdAsync(It.IsAny<long>()), 
+                Times.Never);
+            
+            _refreshTokenRepositoryMock.Verify(x => 
+                x.DeleteAllTokensByUserIdAsync(It.IsAny<long>()), 
+                Times.Never); 
+            
+            _userRepositoryMock.Verify(x => 
+                x.SaveChangesAsync(), 
                 Times.Once);
-
-            _refreshTokenRepositoryMock.Verify(
-                x => x.Delete(It.IsAny<RefreshToken>()),
-                Times.Never);
-
-            _userRepositoryMock.Verify(
-                x => x.SaveChangesAsync(),
-                Times.Never);
         }
 
         [TestMethod]
@@ -839,7 +592,7 @@ namespace DotNetRestaurantManagement.Tests.Services
                 Times.Once);
 
             _refreshTokenRepositoryMock.Verify(
-                x => x.Delete(refreshToken),
+                x => x.DeleteAllTokensByUserIdAsync(userId),
                 Times.Once);
 
             _userRepositoryMock.Verify(

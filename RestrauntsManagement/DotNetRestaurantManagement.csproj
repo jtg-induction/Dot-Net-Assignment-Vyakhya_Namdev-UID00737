@@ -220,6 +220,7 @@
     <Compile Include="Constants\StringConstants.cs" />
     <Compile Include="Constants\SuccessMessages.cs" />
     <Compile Include="Constants\ValidationConstants.cs" />
+    <Compile Include="Controllers\AddressController.cs" />
     <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Data\RestaurantDbContext.cs" />
     <Compile Include="Exceptions\ApiException.cs" />
@@ -266,10 +267,14 @@
     <Compile Include="Models\Enums\OrderStatus.cs" />
     <Compile Include="Models\Enums\UserRole.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repositories\Implementations\AddressRepository.cs" />
+    <Compile Include="Repositories\Interfaces\IAddressRepository.cs" />
     <Compile Include="Repositories\Interfaces\IUserRepository.cs" />
     <Compile Include="Repositories\Implementations\UserRepository.cs" />
+    <Compile Include="Services\Implementations\AddressService.cs" />
     <Compile Include="Services\Implementations\AuthService.cs" />
     <Compile Include="Services\Implementations\UserService.cs" />
+    <Compile Include="Services\Interfaces\IAddressService.cs" />
     <Compile Include="Services\Interfaces\IAuthService.cs" />
     <Compile Include="Filters\JwtAuthorizeAttribute.cs" />
     <Compile Include="Models\DTO\LoginResponse.cs" />

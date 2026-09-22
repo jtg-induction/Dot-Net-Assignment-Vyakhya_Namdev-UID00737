@@ -11,5 +11,6 @@
         public const string userRole = "role";
         public const string JwtIssuer = "JwtIssuer";
         public const string JwtAudience = "JwtAudience";
+        public const string Request = "Request";
     }
 }

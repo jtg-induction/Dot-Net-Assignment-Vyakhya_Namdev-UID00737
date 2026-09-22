@@ -18,5 +18,10 @@
         public const string PhoneNumberAlreadyExists = "Phone Number already exists!";
         public const string PasswordMatchesError = "New Password should not be same as Current Password!";
         public const string InvalidRefreshToken = "Invalid Refresh Token Provided!";
+        public const string NotAuthorized = "You are not authorized for this request!";
+        public const string RequestBodyCannotBeEmpty = "Request body cannot by empty!";
+        public const string AccessDenied = "Access denied for this request!";
+        public const string AddressNotFound = "Address not found!";
+        public const string AccountDeactivated = "This account has been deactivated!";
     }
 }

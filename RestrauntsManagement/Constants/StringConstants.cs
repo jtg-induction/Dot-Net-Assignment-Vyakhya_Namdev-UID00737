@@ -12,5 +12,6 @@
         public const string JwtIssuer = "JwtIssuer";
         public const string JwtAudience = "JwtAudience";
         public const string Request = "Request";
+        public const string DescendingOrder = "desc";
     }
 }

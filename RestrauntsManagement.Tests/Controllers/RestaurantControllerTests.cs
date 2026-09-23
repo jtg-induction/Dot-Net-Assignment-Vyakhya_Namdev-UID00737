@@ -1,6 +1,7 @@
 ﻿using DotNetRestaurantManagement.Constants;
 using DotNetRestaurantManagement.Controllers;
 using DotNetRestaurantManagement.Exceptions;
+using DotNetRestaurantManagement.Filters;
 using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Enums;
@@ -11,8 +12,11 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Http;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web.Http;
+using System.Web.Http.Controllers;
 using System.Web.Http.Results;
 
 namespace DotNetRestaurantManagement.Tests.Controllers
@@ -302,66 +306,6 @@ namespace DotNetRestaurantManagement.Tests.Controllers
             _serviceMock.Verify(
                 x => x.OnboardRestaurant(request),
                 Times.Once);
-        }
-
-        [TestMethod]
-        [Description("Verify OnboardRestaurant throws Forbidden when the authenticated user is not a SuperAdmin")]
-        public async Task OnboardRestaurant_ShouldThrowForbidden_WhenUserIsNotSuperAdmin()
-        {
-            var request = new OnboardRestaurantRequest();
-
-            var identity = new System.Security.Claims.ClaimsIdentity("TestAuth");
-
-            identity.AddClaim(
-                new System.Security.Claims.Claim(
-                    StringConstants.UserId,
-                    "1"));
-
-            identity.AddClaim(
-                new System.Security.Claims.Claim(
-                    System.Security.Claims.ClaimTypes.Role,
-                    UserRole.Customer.ToString()));
-
-            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
-
-            _controller.RequestContext.Principal = principal;
-            _controller.User = principal;
-            System.Threading.Thread.CurrentPrincipal = principal;
-
-            var result = ClaimsHelper.GetUserRole(principal);
-
-            result.Should().Be(UserRole.Customer.ToString());
-
-            Func<Task> action = async () =>
-                await _controller.OnboardRestaurant(request);
-
-            await action.Should()
-                .ThrowAsync<ApiException>();
-
-            _serviceMock.Verify(
-                x => x.OnboardRestaurant(It.IsAny<OnboardRestaurantRequest>()),
-                Times.Never);
-        }
-
-        [TestMethod]
-        [Description("Verify OnboardRestaurant throws an unauthorized exception when the user role claim is missing")]
-        public async Task OnboardRestaurant_ShouldThrowUnauthorized_WhenRoleClaimIsMissing()
-        {
-            var request = new OnboardRestaurantRequest();
-            var claims = new[]
-            {
-                new System.Security.Claims.Claim(StringConstants.UserId, "1")
-            };
-
-            _controller.RequestContext.Principal =
-                new System.Security.Claims.ClaimsPrincipal(
-                    new System.Security.Claims.ClaimsIdentity(claims, "TestAuth"));
-
-            Func<Task> action = async () => await _controller.OnboardRestaurant(request);
-            await action.Should().ThrowAsync<UnauthorizedAccessException>();
-            _serviceMock.Verify(
-                x => x.OnboardRestaurant(It.IsAny<OnboardRestaurantRequest>()),
-                Times.Never);
         }
     }
 }

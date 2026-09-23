@@ -43,16 +43,12 @@ namespace DotNetRestaurantManagement.Controllers
 
         /// Onboard Restaurant
         [JwtAuthorize]
+        [RoleAuthorize(UserRole.SuperAdmin)]
         [HttpPost]
         [Route("")]
         public async Task<IHttpActionResult> OnboardRestaurant(OnboardRestaurantRequest request)
         {
             var userId = ClaimsHelper.GetUserId(User);
-            var role = ClaimsHelper.GetUserRole(User);
-            if (role != UserRole.SuperAdmin.ToString())
-            {
-                throw new ApiException(HttpStatusCode.Forbidden, ErrorMessages.NotAuthenticated);
-            }
             var response = await _restaurantService.OnboardRestaurant(request);
             return Created("", new ApiResponse<OnboardRestaurantResponse>(true, response, SuccessMessages.RestaurantOnboarded));
         }

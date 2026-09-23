@@ -28,7 +28,6 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         void AddOrderItem(OrderItem orderItem);
 
         Task<OrderDetailsResponse> GetOrderDetailsAsync(long orderId, long userId);
-
         Task SaveChangesAsync();
     }
 }

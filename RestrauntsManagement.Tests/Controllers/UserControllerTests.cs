@@ -52,6 +52,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
+        [Description("Verify that profile is successfully updated when a valid request is given")]
         public async Task UpdateProfile_ValidRequest_ReturnsOk()
         {
             SetUserClaims(1);
@@ -89,6 +90,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
+        [Description("Verify that the controller passes the correct UserId and request data to the service")]
         public async Task UpdateProfile_ValidClaims_PassesCorrectUserIdAndRequest()
         {
             SetUserClaims(5);
@@ -122,6 +124,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
+        [Description("Verify what happens when the JWT does not contain UserId")]
         public async Task UpdateProfile_MissingUserIdClaim_ThrowsUnauthorizedAccessException()
         {
             SetUserWithoutUserIdClaim();
@@ -143,6 +146,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
+        [Description("Verify if password change works with a valid request")]
         public async Task ChangePassword_ValidRequest_ReturnsOk()
         {
             SetUserClaims(1);
@@ -172,6 +176,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
+        [Description("Verify the correct UserId and password details are passed to the service")]
         public async Task ChangePassword_ValidClaims_PassesCorrectUserIdAndRequest()
         {
             SetUserClaims(5);
@@ -200,6 +205,7 @@ namespace RestrauntsManagement.Tests.Controllers
         }
 
         [TestMethod]
+        [Description("Checks behavior when UserId is missing from JWT")]
         public async Task ChangePassword_MissingUserIdClaim_ThrowsUnauthorizedAccessException()
         {
             SetUserWithoutUserIdClaim();

@@ -1,4 +1,5 @@
 ﻿using DotNetRestaurantManagement.Data;
+using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using System.Collections;
@@ -47,6 +48,14 @@ namespace DotNetRestaurantManagement.Repositories
                 .ToListAsync();
         }
 
+        public async Task<Order> GetOrderAsync(
+                long orderId,
+                long userId)
+        {
+            return await _context.Orders
+                .FirstOrDefaultAsync(x => x.Id == orderId && 
+                x.CustomerId == userId);
+        }
         public void AddOrder(Order order)
         {
             _context.Orders.Add(order);
@@ -55,6 +64,63 @@ namespace DotNetRestaurantManagement.Repositories
         public void AddOrderItem(OrderItem orderItem)
         {
             _context.OrderedItems.Add(orderItem);
+        }
+
+        public async Task<OrderDetailsResponse> GetOrderDetailsAsync(
+                long orderId,
+                long userId)
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(x =>
+                    x.Id == orderId &&
+                    x.CustomerId == userId)
+                .Select(x => new OrderDetailsResponse
+                {
+                    OrderId = x.Id,
+                    Items = x.OrderedItems
+                        .Select(o => new OrderItemResponse
+                        {
+                            MenuItemId = o.MenuItemId,
+                            Quantity = o.Quantity,
+                            Price = o.Price
+                        })
+                        .ToList(),
+
+                    DeliveryAddress = new AddressResponse
+                    {
+                        Id = x.DeliveryAddress.Id,
+                        HouseNumber = x.DeliveryAddress.HouseNumber,
+                        StreetAddress = x.DeliveryAddress.StreetAddress,
+                        City = x.DeliveryAddress.City,
+                        State = x.DeliveryAddress.State,
+                        PinCode = x.DeliveryAddress.PinCode,
+                        Country = x.DeliveryAddress.Country,
+                        AddressType = (int)x.DeliveryAddress.AddressType
+                    },
+
+                    TotalAmount = x.TotalAmount,
+                    TotalItems = x.TotalItems,
+                    OrderStatus = x.Status,
+                    Restaurant = new RestaurantResponse
+                    {
+                        RestaurantId = x.Restaurant.Id,
+                        Name = x.Restaurant.Name,
+                        Email = x.Restaurant.Email,
+                        Cuisine = x.Restaurant.Cuisine.ToString(),
+
+                        Address = new RestaurantAddressDto
+                        {
+                            HouseNumber = x.Restaurant.Address.HouseNumber,
+                            StreetAddress = x.Restaurant.Address.StreetAddress,
+                            City = x.Restaurant.Address.City,
+                            State = x.Restaurant.Address.State,
+                            PinCode = x.Restaurant.Address.PinCode,
+                            Country = x.Restaurant.Address.Country
+                        }
+                    }
+                })
+                .FirstOrDefaultAsync();
         }
 
         public async Task SaveChangesAsync()

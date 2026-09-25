@@ -7,5 +7,6 @@ namespace DotNetRestaurantManagement.Services.Interfaces
     {
         Task<PaginationResult<RestaurantDto>> GetRestaurantsDetailsAsync(PaginationRequest request);
         Task<PaginationResult<MenuItemDto>> GetRestaurantMenuAsync(long restaurantId, PaginationRequest request);
+        Task<OnboardRestaurantResponse> OnboardRestaurant(OnboardRestaurantRequest request);
     }
 }

@@ -25,5 +25,15 @@
         public const string AccountDeactivated = "This account has been deactivated!";
         public const string InvalidRestaurantId = "Invalid RestaurantId!";
         public const string RestaurantNotFound = "Restaurant Not Found!";
+        public const string NullOrderRequestException = "Order Request cannot be null!";
+        public const string EmptyOrderItemsException = "Order must contain at least one item!";
+        public const string ItemQuantityException = "Item quantity must be greater than zero!";
+        public const string DeliveryAddressNotFound = "Delivery Address not belongs to user!";
+        public const string ItemNotFound = "One or More items not found!";
+        public const string InsufficientQuanityError = "Insufficient quantity for menu item: {0}";
+        public const string DuplicateMenuItemException = "One or more menu items have been added more than once!";
+        public const string ItemsMustBelongToSameRestaurant = "All items in an order must belong to the same restaurant";
+        public const string InsufficientBalance = "Insufficeint User balance!";
+        public const string MenuItemNotFound = "MenuItem for this restaurant not found: {0}";
     }
 }

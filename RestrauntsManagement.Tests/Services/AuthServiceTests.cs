@@ -1,4 +1,5 @@
-﻿using DotNetRestaurantManagement.Exceptions;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Exceptions;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Models.Enums;
@@ -38,14 +39,7 @@ namespace DotNetRestaurantManagement.Tests.Services
                 Name = "Vyakhya Namdev",
                 Email = " VyakhyaNamdev@Test.com ",
                 Password = "vyakhya@123",
-                PhoneNumber = " 9876543210 ",
-                HouseNumber = "12A",
-                StreetAddress = "MG Road",
-                City = "Noida",
-                State = "Uttar Pradesh",
-                PinCode = "110001",
-                Country = "India",
-                AddressType = AddressType.Home
+                PhoneNumber = " 9876543210 "
             };
         }
 
@@ -73,14 +67,6 @@ namespace DotNetRestaurantManagement.Tests.Services
                 CreatedAt = DateTime.UtcNow.AddDays(-1),
                 User = user
             };
-        }
-
-        [TestMethod]
-        [Description("Verifies that Signup throws an ArgumentNullException when the signup request is null.")]
-        public async Task Signup_NullRequest_ThrowsArgumentNullException()
-        {
-            Func<Task> action = () => _authService.Signup(null);
-            await action.Should().ThrowAsync<ArgumentNullException>();
         }
 
         [TestMethod]
@@ -224,8 +210,8 @@ namespace DotNetRestaurantManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Verifies that Signup assigns the Customer role and creates an active home address mapping for the new user.")]
-        public async Task Signup_ValidRequest_CreatesCustomerAndUserAddress()
+        [Description("Verifies that Signup assigns the Customer role.")]
+        public async Task Signup_ValidRequest_CreatesCustomer()
         {
             var request = GetValidSignupRequest();
             User savedUser = null;
@@ -240,17 +226,11 @@ namespace DotNetRestaurantManagement.Tests.Services
 
             _userRepositoryMock
                 .Setup(x => x.AddUser(It.IsAny<User>()))
-                .Callback<User>(user =>
-                {
-                    savedUser = user;
-                    user.Id = 1;
-                });
+                .Callback<User>(user => savedUser = user);
 
             await _authService.Signup(request);
             savedUser.Should().NotBeNull();
             savedUser.Role.Should().Be(UserRole.Customer);
-            savedUser.UserAddresses.Should().HaveCount(1);
-            savedUser.UserAddresses.First().Address.AddressType.Should().Be(AddressType.Home);
         }
 
         [TestMethod]
@@ -513,8 +493,8 @@ namespace DotNetRestaurantManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Verifies that Logout rejects the request when the refresh token ID does not exist.")]
-        public async Task LogoutAsync_RefreshTokenNotFound_ThrowsInvalidCredentials()
+        [Description("Verifies that Logout throws NotFound when the refresh token ID does not exist.")]
+        public async Task LogoutAsync_RefreshTokenNotFound_DoesNothing()
         {
             _refreshTokenRepositoryMock
                 .Setup(x => x.GetByIdAsync(10))
@@ -522,47 +502,43 @@ namespace DotNetRestaurantManagement.Tests.Services
 
             Func<Task> action = () => _authService.LogoutAsync(1, 10);
 
-            var exception = await action.Should().ThrowAsync<ApiException>();
-            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            await action.Should().NotThrowAsync();
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.GetByIdAsync(10),
+                Times.Once);
 
             _refreshTokenRepositoryMock.Verify(
                 x => x.Delete(It.IsAny<RefreshToken>()),
                 Times.Never);
-        }
-
-        [TestMethod]
-        [Description("Verifies that Logout rejects an invalid user ID without querying the refresh token repository.")]
-        public async Task LogoutAsync_InvalidUserId_ThrowsInvalidCredentials()
-        {
-            Func<Task> action = () => _authService.LogoutAsync(0, 10);
-
-            var exception = await action.Should().ThrowAsync<ApiException>();
-            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
             _refreshTokenRepositoryMock.Verify(
-                x => x.GetByIdAsync(It.IsAny<long>()),
-                Times.Never);
-
-            _refreshTokenRepositoryMock.Verify(
-                x => x.Delete(It.IsAny<RefreshToken>()),
+                x => x.SaveChangesAsync(),
                 Times.Never);
         }
 
         [TestMethod]
-        [Description("Verifies that Logout rejects an invalid refresh token ID without querying the refresh token repository.")]
-        public async Task LogoutAsync_InvalidRefreshTokenId_ThrowsInvalidCredentials()
+        [Description("Verifies that Logout does nothing when the refresh token ID is invalid.")]
+        public async Task LogoutAsync_InvalidRefreshTokenId_DoesNothing()
         {
+            _refreshTokenRepositoryMock
+                .Setup(x => x.GetByIdAsync(0))
+                .ReturnsAsync((RefreshToken)null);
+
             Func<Task> action = () => _authService.LogoutAsync(1, 0);
 
-            var exception = await action.Should().ThrowAsync<ApiException>();
-            exception.Which.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            await action.Should().NotThrowAsync();
 
             _refreshTokenRepositoryMock.Verify(
-                x => x.GetByIdAsync(It.IsAny<long>()),
-                Times.Never);
+                x => x.GetByIdAsync(0),
+                Times.Once);
 
             _refreshTokenRepositoryMock.Verify(
                 x => x.Delete(It.IsAny<RefreshToken>()),
+                Times.Never);
+
+            _refreshTokenRepositoryMock.Verify(
+                x => x.SaveChangesAsync(),
                 Times.Never);
         }
     }

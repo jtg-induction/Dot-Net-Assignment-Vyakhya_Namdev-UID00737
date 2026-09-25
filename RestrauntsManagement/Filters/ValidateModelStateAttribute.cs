@@ -1,8 +1,11 @@
-﻿using System.Net;
+﻿using DotNetRestaurantManagement.Constants;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Web.Http;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
-using System.Linq;
 
 namespace DotNetRestaurantManagement.Filters
 {
@@ -10,16 +13,43 @@ namespace DotNetRestaurantManagement.Filters
     {
         public override void OnActionExecuting(HttpActionContext actionContext)
         {
+            var bodyParameter = actionContext.ActionDescriptor
+                    .GetParameters()
+                    .FirstOrDefault(x =>
+                    x.GetCustomAttributes<FromBodyAttribute>().Any());
+
+            if (bodyParameter != null)
+            {
+                var parameterName = bodyParameter.Prefix ?? bodyParameter.ParameterName;
+                if (!actionContext.ActionArguments.TryGetValue(parameterName, out var value) || value == null)
+                {
+                    actionContext.Response = actionContext.Request.CreateResponse(
+                        HttpStatusCode.BadRequest,
+                        new
+                        {
+                            Errors = new Dictionary<string, string>
+                            {
+                                {
+                                    StringConstants.Request, ErrorMessages.RequestBodyCannotBeEmpty
+                                }
+                            }
+                        }
+                    );
+
+                    return;
+                }
+            }
+
             if (actionContext.ModelState.IsValid) return;
             var errors = actionContext.ModelState
                 .Where(x => x.Value.Errors.Any())
-                .SelectMany(x => x.Value.Errors.Select(error =>
-                new
-                {
-                    Field = x.Key,
-                    Message = !string.IsNullOrEmpty(error.ErrorMessage) ? error.ErrorMessage : error.Exception?.Message
-                }))
-                .ToList();
+                .GroupBy(x => x.Key)
+                .ToDictionary(
+                    group => group.Key,
+                    group => GetErrorMessages(
+                        group.SelectMany(x => x.Value.Errors)
+                    )
+                );
 
             actionContext.Response = actionContext.Request.CreateResponse(
                 HttpStatusCode.BadRequest,
@@ -28,6 +58,18 @@ namespace DotNetRestaurantManagement.Filters
                     Errors = errors
                 }
             );
+        }
+
+        private static List<string> GetErrorMessages(IEnumerable<System.Web.Http.ModelBinding.ModelError> errors)
+        {
+            return errors
+                .Select(error =>
+                    !string.IsNullOrWhiteSpace(error.ErrorMessage)
+                    ? error.ErrorMessage
+                    : error.Exception?.Message)
+                .Where(message => !string.IsNullOrWhiteSpace(message))
+                .Distinct()
+                .ToList();
         }
     }
 }

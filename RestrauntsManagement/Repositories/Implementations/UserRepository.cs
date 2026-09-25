@@ -1,5 +1,6 @@
 ﻿using DotNetRestaurantManagement.Data;
 using DotNetRestaurantManagement.Models.Entities;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
@@ -43,20 +44,6 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
                 .AnyAsync(user =>
                     user.PhoneNumber == phoneNumber &&
                     user.Id != userId);
-        }
-
-        public async Task<UserAddress> GetUserAddressAsync(long userId){
-            return await _context.UserAddresses
-                .Include(ua => ua.Address)
-                .FirstOrDefaultAsync(ua =>
-                    ua.UserId == userId &&
-                    ua.IsActive);
-        }
-        public void AddUserAddress(Address address, UserAddress userAddress)
-        {
-            _context.Addresses.Add(address);
-            userAddress.Address = address;
-            _context.UserAddresses.Add(userAddress);
         }
 
         public async Task<User> GetByIdAsync(long userId)

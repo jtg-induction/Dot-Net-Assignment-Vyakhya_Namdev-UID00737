@@ -43,6 +43,9 @@
         public const string ExistingUserError = "For an existing user, provide UserId only!";
         public const string RequiredOwnerDetails = "Name, email, phone number and password are required for a new owner!";
         public const string NotAuthenticated = "You are not authenticated for this route!";
+        public const string NotAuthenticatedToUpdateStatus = "You are not authenticated to update order status of another restaurant!";
         public const string RoleMissingClaim = "User Role is missing!";
+        public const string SameStatusError = "Order is already in this status!";
+        public const string OrderStatusCannotChange = "Order Status cannot change now!";
     }
 }

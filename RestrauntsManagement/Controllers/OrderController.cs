@@ -4,7 +4,6 @@ using DotNetRestaurantManagement.Filters;
 using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Services.Interfaces;
-using DotNetRestaurantManagement.Constants;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;

@@ -30,7 +30,7 @@ namespace DotNetRestaurantManagement.Data
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderedItems { get; set; }
+        public virtual DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<UserAddress> UserAddresses { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         /// <summary>

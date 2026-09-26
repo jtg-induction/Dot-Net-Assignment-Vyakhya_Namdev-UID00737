@@ -52,7 +52,7 @@ namespace DotNetRestaurantManagement.Repositories
 
         public void AddOrderItem(OrderItem orderItem)
         {
-            _context.OrderedItems.Add(orderItem);
+            _context.OrderItems.Add(orderItem);
         }
 
         public async Task<OrderDetailsResponse> GetOrderDetailsAsync(

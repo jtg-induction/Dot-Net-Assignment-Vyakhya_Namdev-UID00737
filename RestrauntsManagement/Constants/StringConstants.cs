@@ -12,5 +12,13 @@
         public const string JwtIssuer = "JwtIssuer";
         public const string JwtAudience = "JwtAudience";
         public const string Request = "Request";
+        public const string Reports = "Reports";
+        public const string TopOrderReportFileName  = "Top10OrderedItems.trdp";
+        public const string FrequentlyBoughtItemsReportFileName = "FrequentlyBoughtItems.trdp";
+        public const string ShowRestaurantData = "ShowRestaurantColumns";
+        public const string TopOrderReportPdfFileName = "Top10OrderedItems.pdf";
+        public const string FrequentlyBoughtItemsPdfFileName = "FrequentlyBoughtTogether.pdf";
+        public const string ItemCount = "ItemCount";
+
     }
 }

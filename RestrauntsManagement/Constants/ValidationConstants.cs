@@ -19,5 +19,7 @@
         public const int RefreshTokenLength = 88;
         public const int RefreshTokenExpiryDays = 7;
         public const int OrderItemMinimumLength = 1;
+        public const int MinimumItemRequest = 2;
+        public const int MaximumItemRequest = 5;
     }
 }

@@ -44,6 +44,9 @@ namespace DotNetRestaurantManagement
             container.RegisterType<IOwnerOrderService, OwnerOrderService>();
             // Registers IOwnerOrderRepository with its concrete implementation.
             container.RegisterType<IOwnerOrderRepository, OwnerOrderRepository>();
+            container.RegisterType<IReportRepository, ReportRepository>();
+            container.RegisterType<IReportService, ReportService>();
+            container.RegisterType<IGenerateReportService, GenerateReportService>();
             // Sets Unity as the dependency resolver for Web API.
             GlobalConfiguration.Configuration.DependencyResolver = new UnityDependencyResolver(container);
         }

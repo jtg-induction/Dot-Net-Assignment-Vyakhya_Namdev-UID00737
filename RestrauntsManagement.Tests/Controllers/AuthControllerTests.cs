@@ -38,14 +38,7 @@ namespace RestrauntsManagement.Tests.Controllers
                 Name = "Vyakhya Namdev",
                 Email = "vyakhyanamdev@test.com",
                 Password = "vyakhya@123",
-                PhoneNumber = "9876543210",
-                HouseNumber = "12A",
-                StreetAddress = "MG Road",
-                City = "Noida",
-                State = "Uttar Pradesh",
-                PinCode = "110001",
-                Country = "India",
-                AddressType = AddressType.Home
+                PhoneNumber = "9876543210"
             };
         }
 
@@ -71,7 +64,7 @@ namespace RestrauntsManagement.Tests.Controllers
                 .Setup(x => x.Signup(It.IsAny<SignupRequest>()))
                 .ReturnsAsync(response);
             var result = await _controller.Signup(request);
-            var okResult = result as OkNegotiatedContentResult<ApiResponse<SignupResponse>>;
+            var okResult = result as CreatedNegotiatedContentResult<ApiResponse<SignupResponse>>;
             okResult.Should().NotBeNull();
             okResult.Content.Should().NotBeNull();
             okResult.Content.Data.UserId.Should().Be(1);
@@ -95,7 +88,7 @@ namespace RestrauntsManagement.Tests.Controllers
             var result = await _controller.Signup(request);
 
             var okResult =
-                result as OkNegotiatedContentResult<ApiResponse<SignupResponse>>;
+                result as CreatedNegotiatedContentResult<ApiResponse<SignupResponse>>;
 
             okResult.Should().NotBeNull();
             okResult.Content.Success.Should().BeTrue();

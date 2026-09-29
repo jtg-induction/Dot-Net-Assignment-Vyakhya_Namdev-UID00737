@@ -23,8 +23,6 @@ namespace DotNetRestaurantManagement.Services.Implementations
         }
         public async Task<SignupResponse> Signup(SignupRequest request)
         {
-            if (request == null) throw new ArgumentNullException(nameof(request));
-
             string normalizedEmail = request.Email.Trim().ToLowerInvariant();
             string normalizedPhoneNumber = request.PhoneNumber.Trim();
 
@@ -37,17 +35,6 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 throw new ApiException(HttpStatusCode.Conflict, ErrorMessages.DuplicatePhoneNumberException);
             }
 
-            var address = new Address
-            {
-                HouseNumber = request.HouseNumber.Trim(),
-                StreetAddress = request.StreetAddress.Trim(),
-                City = request.City.Trim(),
-                State = request.State.Trim(),
-                PinCode = request.PinCode.Trim(),
-                Country = request.Country.Trim(),
-                AddressType = request.AddressType
-            };
-
             var user = new User
             {
                 Name = request.Name.Trim(),
@@ -57,13 +44,6 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 Role = UserRole.Customer
             };
 
-            var userAddress = new UserAddress
-            {
-                User = user,
-                Address = address
-            };
-
-            user.UserAddresses.Add(userAddress);
             _userRepository.AddUser(user);
             await _userRepository.SaveChangesAsync();
             return new SignupResponse
@@ -78,7 +58,6 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
-            if (request == null) throw new ArgumentNullException(nameof(request));
             string normalizedEmail = request.Email.Trim().ToLowerInvariant();
             var user = await _userRepository.GetByEmailAsync(normalizedEmail);
             if (user == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
@@ -87,7 +66,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 user.Password);
 
             if (!isValidPassword) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
-            if (!user.IsActive) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
+            if (!user.IsActive) throw new ApiException(HttpStatusCode.Forbidden, ErrorMessages.AccountDeactivated);
             string refreshToken = TokenHelper.GenerateRefreshToken();
             string refreshTokenHash = TokenHelper.Hash(refreshToken);
             var refreshTokenEntity = new RefreshToken
@@ -112,7 +91,6 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
         public async Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken)
         {
-            if (string.IsNullOrWhiteSpace(refreshToken)) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
             string refreshTokenHash = TokenHelper.Hash(refreshToken);
             var existingToken = await _refreshTokenRepository.GetByTokenAsync(refreshTokenHash);
             if (existingToken == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
@@ -123,7 +101,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
             var user = existingToken.User;
             if (user == null) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.InvalidCredentials);
-            if (!user.IsActive) throw new ApiException( HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
+            if (!user.IsActive) throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.NotAuthorized);
             string newRefreshToken = TokenHelper.GenerateRefreshToken();
             string newRefreshTokenHash = TokenHelper.Hash(newRefreshToken);
             var newToken = new RefreshToken
@@ -145,10 +123,12 @@ namespace DotNetRestaurantManagement.Services.Implementations
 
         public async Task LogoutAsync(long userId, long refreshTokenId)
         {
-            if (userId <= 0 || refreshTokenId <= 0) return;
             var existingToken = await _refreshTokenRepository.GetByIdAsync(refreshTokenId);
             if (existingToken == null) return;
-            if (existingToken.UserId != userId) return;
+            if (existingToken.UserId != userId)
+            {
+                throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.NotAuthorized);
+            }
             _refreshTokenRepository.Delete(existingToken);
             await _refreshTokenRepository.SaveChangesAsync();
         }

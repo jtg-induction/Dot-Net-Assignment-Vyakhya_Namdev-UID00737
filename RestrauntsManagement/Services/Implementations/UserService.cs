@@ -4,10 +4,11 @@ using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Models.Enums;
-using DotNetRestaurantManagement.Repositories;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -27,23 +28,20 @@ namespace DotNetRestaurantManagement.Services.Implementations
             long userId,
             UpdateProfileRequest request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
             var user = await _userRepository.GetByIdAsync(userId);
 
             if (user == null)
             {
                 throw new ApiException(
                     HttpStatusCode.Unauthorized,
-                    ErrorMessages.UserNotFound);
+                    ErrorMessages.NotAuthorized);
             }
 
             if (!user.IsActive)
             {
                 throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.UserNotFound);
+                    HttpStatusCode.Forbidden,
+                    ErrorMessages.AccessDenied);
             }
 
             if (!string.IsNullOrWhiteSpace(request.Name))
@@ -90,23 +88,20 @@ namespace DotNetRestaurantManagement.Services.Implementations
             long userId,
             ChangePasswordRequest request)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
             var user = await _userRepository.GetByIdAsync(userId);
 
             if (user == null)
             {
                 throw new ApiException(
                     HttpStatusCode.Unauthorized,
-                    ErrorMessages.UserNotFound);
+                    ErrorMessages.NotAuthorized);
             }
 
             if (!user.IsActive)
             {
                 throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.UserNotFound);
+                    HttpStatusCode.Forbidden,
+                    ErrorMessages.AccessDenied);
             }
 
             bool isCurrentPasswordValid =
@@ -117,7 +112,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
             if (!isCurrentPasswordValid)
             {
                 throw new ApiException(
-                    HttpStatusCode.Unauthorized,
+                    HttpStatusCode.BadRequest,
                     ErrorMessages.InvalidCredentials);
             }
 
@@ -129,7 +124,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
             if (isNewPasswordSameAsCurrent)
             {
                 throw new ApiException(
-                    HttpStatusCode.NoContent,
+                    HttpStatusCode.BadRequest,
                     ErrorMessages.PasswordMatchesError);
             }
 
@@ -139,75 +134,22 @@ namespace DotNetRestaurantManagement.Services.Implementations
             await _userRepository.SaveChangesAsync();
         }
 
-        public async Task<AddressResponse> AddAddressAsync(
-            long userId,
-            AddressRequest request)
+        public async Task DeactivateAccountAsync(long userId, long refreshTokenId)
         {
-            if (request == null)
-                throw new ArgumentNullException(nameof(request));
-
             var user = await _userRepository.GetByIdAsync(userId);
-
             if (user == null)
             {
                 throw new ApiException(
                     HttpStatusCode.Unauthorized,
-                    ErrorMessages.UserNotFound);
+                    ErrorMessages.NotAuthorized);
             }
-
             if (!user.IsActive)
             {
                 throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.UserNotFound);
+                    HttpStatusCode.Forbidden,
+                    ErrorMessages.AccessDenied);
             }
 
-            var currentUserAddress =
-                await _userRepository.GetUserAddressAsync(userId);
-
-            if (currentUserAddress != null)
-                currentUserAddress.IsActive = false;
-
-            var address = new Address
-            {
-                HouseNumber = request.HouseNumber.Trim(),
-                StreetAddress = request.StreetAddress.Trim(),
-                City = request.City.Trim(),
-                State = request.State.Trim(),
-                PinCode = request.PinCode.Trim(),
-                Country = request.Country.Trim(),
-                AddressType = (AddressType)request.AddressType
-            };
-
-            var userAddress = new UserAddress
-            {
-                UserId = userId,
-                Address = address
-            };
-
-            _userRepository.AddUserAddress(address, userAddress);
-            await _userRepository.SaveChangesAsync(); 
-
-            return new AddressResponse
-            {
-                Id = address.Id,
-                HouseNumber = address.HouseNumber,
-                StreetAddress = address.StreetAddress,
-                City = address.City,
-                State = address.State,
-                PinCode = address.PinCode,
-                Country = address.Country,
-                AddressType = (int)address.AddressType
-            };
-        }
-
-        public async Task DeactivateAccountAsync(long userId, long refreshTokenId)
-        {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null || !user.IsActive)
-            {
-                throw new ApiException(HttpStatusCode.Unauthorized, ErrorMessages.UserNotFound);
-            }
             user.IsActive = false;
 
             if (refreshTokenId > 0)

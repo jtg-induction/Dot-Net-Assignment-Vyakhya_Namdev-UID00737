@@ -47,5 +47,11 @@
         public const string RoleMissingClaim = "User Role is missing!";
         public const string SameStatusError = "Order is already in this status!";
         public const string OrderStatusCannotChange = "Order Status cannot change now!";
+        public const string RestaurantDoesNotBelongsToUser = "Requested Restaurant Don't Belongs to User!";
+        public const string FrequentlyBoughtTogetherSizeError = "Frequently Bought Items size can be 2 or 3 only!";
+        public const string DuplicateItemsNotAllowed = "Duplicate item IDs are not allowed!";
+        public const string MenuItemsNotFound = "Menu item(s) not found: {0}";
+        public const string FrequentlyBoughtItemsNotFound = "Frequently Bought Items for this size not found!";
+
     }
 }

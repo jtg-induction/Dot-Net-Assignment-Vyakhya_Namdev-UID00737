@@ -1,8 +1,10 @@
 ﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.Enums;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading;
@@ -14,6 +16,13 @@ namespace DotNetRestaurantManagement.Filters
 {
     public class JwtAuthorizeAttribute : AuthorizeAttribute
     {
+        private readonly string[] _allowedRoles;
+        public JwtAuthorizeAttribute(params UserRole[] roles)
+        {
+            _allowedRoles = roles
+                .Select(role => role.ToString())
+                .ToArray();
+        }
         protected override bool IsAuthorized(HttpActionContext actionContext)
         {
             try
@@ -57,7 +66,12 @@ namespace DotNetRestaurantManagement.Filters
                 HttpContext.Current.User = userInfo;
                 Thread.CurrentPrincipal = userInfo;
 
-                return true;
+                if (_allowedRoles.Length == 0)
+                {
+                    return true;
+                }
+
+                return _allowedRoles.Any(userInfo.IsInRole);
             }
             catch
             {

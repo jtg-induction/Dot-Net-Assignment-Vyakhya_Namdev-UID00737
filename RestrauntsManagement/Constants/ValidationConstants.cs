@@ -5,6 +5,7 @@
         public const int MaxNameLength = 150;
         public const int MaxTextLength = 255;
         public const int MaxLocationLength = 100;
+        public const int MaxPageLimit = 100;
         public const int HouseNumberMaxLength = 50;
         public const int MinimumPasswordLength = 8;
         public const int MaximumPasswordLength = 50;

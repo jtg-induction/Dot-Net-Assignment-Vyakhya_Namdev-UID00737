@@ -51,6 +51,17 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
             _context.UserAddresses.Add(userAddress);
         }
 
+        public async Task<bool> DoesAddressBelongsToUserAsync(
+            long userId,
+            long addressId)
+        {
+            return await _context.UserAddresses
+                .AnyAsync(x =>
+                    x.UserId == userId &&
+                    x.AddressId == addressId &&
+                    x.IsActive);
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

@@ -13,5 +13,6 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
         Task<User> GetByEmailAsync(string email);
         Task<User> GetByIdAsync(long userId);
         Task<bool> PhoneNumberExistsForOtherUserAsync(string phoneNumber, long userId);
+        Task<User> GetActiveUserByIdAsync(long userId);
     }
 }

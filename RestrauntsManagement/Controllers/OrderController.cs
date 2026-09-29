@@ -1,8 +1,11 @@
-﻿using DotNetRestaurantManagement.Filters;
+﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Exceptions;
+using DotNetRestaurantManagement.Filters;
 using DotNetRestaurantManagement.Helpers;
 using DotNetRestaurantManagement.Models.DTO;
 using DotNetRestaurantManagement.Services.Interfaces;
 using DotNetRestaurantManagement.Constants;
+using System.Net;
 using System.Threading.Tasks;
 using System.Web.Http;
 
@@ -26,6 +29,38 @@ namespace DotNetRestaurantManagement.Controllers
             long userId = ClaimsHelper.GetUserId(User);
             var result = await _orderService.PlaceOrderAsync(userId, request);
             return Created("", new ApiResponse<OrderResponse>(true, result, SuccessMessages.OrderPlaced));
+        }
+
+        /// Fetching the order details made by user
+        [JwtAuthorize]
+        [HttpGet]
+        [Route("{orderId:long}")]
+        public async Task<IHttpActionResult> GetOrderDetails(long orderId)
+        {
+            long userId = ClaimsHelper.GetUserId(User);
+            var order = await _orderService.GetOrderDetailsAsync(orderId, userId);
+            return Ok(new ApiResponse<OrderDetailsResponse>
+            (
+                true,
+                order,
+                SuccessMessages.OrderSuccessMessage
+            ));
+        }
+
+        [HttpPatch]
+        [Route("{orderId:long}")]
+        [JwtAuthorize]
+        public async Task<IHttpActionResult> CancelOrder(long orderId)
+        {
+            long userId = ClaimsHelper.GetUserId(User);
+            var result = await _orderService.CancelOrderAsync(
+                orderId,
+                userId);
+
+            return Ok(new ApiResponse<CancelOrderResponse>(
+                            true,
+                            result,
+                            SuccessMessages.OrderCancelled));
         }
     }
 }

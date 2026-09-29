@@ -35,5 +35,7 @@
         public const string ItemsMustBelongToSameRestaurant = "All items in an order must belong to the same restaurant";
         public const string InsufficientBalance = "Insufficeint User balance!";
         public const string MenuItemNotFound = "MenuItem for this restaurant not found: {0}";
+        public const string OrderNotFound = "Order not found!";
+        public const string OrderCannotBeCancelled = "Order cannot be cancelled!";
     }
 }

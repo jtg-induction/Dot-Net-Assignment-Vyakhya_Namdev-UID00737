@@ -129,16 +129,21 @@ namespace DotNetRestaurantManagement.Services
                         {
                             MenuItemId = menuItem.Id,
                             Quantity = requestedItem.Quantity,
-                            Price = menuItem.Price * requestedItem.Quantity
+                            Price = menuItem.Price
                         });
 
                     }
 
                     if (customer.Balance < totalAmount)
                     {
+                        decimal insufficientAmount = totalAmount - customer.Balance;
                         throw new ApiException(
                             HttpStatusCode.BadRequest,
-                            ErrorMessages.InsufficientBalance);
+                            string.Format(
+                                ErrorMessages.InsufficientBalance,
+                                customer.Balance,
+                                totalAmount,
+                                insufficientAmount));
                     }
 
                     customer.Balance -= totalAmount;
@@ -251,7 +256,7 @@ namespace DotNetRestaurantManagement.Services
                     return new CancelOrderResponse
                     {
                         OrderId = orderId,
-                        OrderStatus = OrderStatus.Cancelled
+                        OrderStatus = OrderStatus.Cancelled,
                     };
                 }
                 catch

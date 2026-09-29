@@ -7,12 +7,12 @@ namespace DotNetRestaurantManagement.Services.Interfaces
     public interface IReportService
     {
         Task<byte[]> GenerateTopOrderedItemsReport(
-                long ownerId,
+                long? ownerId,
                 long? restaurantId,
                 IEnumerable<long> excludedItemIds);
 
         Task<byte[]> GenerateFrequentlyBoughtTogetherReport(
-                long ownerId,
+                long? ownerId,
                 long restaurantId,
                 int combinationSize,
                 int limit);

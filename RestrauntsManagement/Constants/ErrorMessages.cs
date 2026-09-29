@@ -33,7 +33,7 @@
         public const string InsufficientQuanityError = "Insufficient quantity for menu item: {0}";
         public const string DuplicateMenuItemException = "One or more menu items have been added more than once!";
         public const string ItemsMustBelongToSameRestaurant = "All items in an order must belong to the same restaurant";
-        public const string InsufficientBalance = "Insufficeint User balance!";
+        public const string InsufficientBalance = "Insufficient User balance! You have only ₹{0} left";
         public const string MenuItemNotFound = "MenuItem for this restaurant not found: {0}";
         public const string OrderNotFound = "Order not found!";
         public const string OrderCannotBeCancelled = "Order cannot be cancelled!";
@@ -52,6 +52,7 @@
         public const string DuplicateItemsNotAllowed = "Duplicate item IDs are not allowed!";
         public const string MenuItemsNotFound = "Menu item(s) not found: {0}";
         public const string FrequentlyBoughtItemsNotFound = "Frequently Bought Items for this size not found!";
+        public const string InvalidLimit = "Please provide a positive limit!";
 
     }
 }

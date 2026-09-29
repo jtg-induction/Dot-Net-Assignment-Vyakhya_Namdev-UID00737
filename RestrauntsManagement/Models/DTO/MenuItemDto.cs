@@ -12,7 +12,7 @@ namespace DotNetRestaurantManagement.Models.DTO
 
         public int PreparationTime { get; set; }
 
-        public MenuCategory Category { get; set; }
+        public string Category { get; set; }
 
         public int QuantityAvailable { get; set; }
     }

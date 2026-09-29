@@ -284,6 +284,7 @@
     <Compile Include="Models\DTO\PaginationRequest.cs" />
     <Compile Include="Models\DTO\PaginationResult.cs" />
     <Compile Include="Models\DTO\RestaurantAddressDto.cs" />
+    <Compile Include="Models\DTO\RestaurantAddressRequest.cs" />
     <Compile Include="Models\DTO\RestaurantDto.cs" />
     <Compile Include="Models\DTO\RestaurantResponse.cs" />
     <Compile Include="Models\DTO\SignupRequest.cs" />

@@ -101,7 +101,7 @@ namespace DotNetRestaurantManagement.Tests.Services
             restaurant.Address.State.Should().Be("Maharashtra");
             restaurant.Address.PinCode.Should().Be("411001");
             restaurant.Address.Country.Should().Be("India");
-            restaurant.Cuisine.Should().Be((CuisineType)1);
+            restaurant.Cuisine.Should().Be("Indian");
         }
 
         [TestMethod]
@@ -203,7 +203,7 @@ namespace DotNetRestaurantManagement.Tests.Services
             {
                 Name = "Saini Restaurant",
                 Email = "saini@test.com",
-                Address = new AddressRequest
+                Address = new RestaurantAddressRequest
                 {
                     HouseNumber = "154",
                     StreetAddress = "Mall Road",
@@ -455,7 +455,7 @@ namespace DotNetRestaurantManagement.Tests.Services
             {
                 Name = "Saini Restaurant",
                 Email = "saini@test.com",
-                Address = new AddressRequest
+                Address = new RestaurantAddressRequest
                 {
                     HouseNumber = "154",
                     StreetAddress = "Mall Road",
@@ -537,7 +537,7 @@ namespace DotNetRestaurantManagement.Tests.Services
             {
                 Name = "Saini Restaurant",
                 Email = "saini@test.com",
-                Address = new AddressRequest
+                Address = new RestaurantAddressRequest
                 {
                     HouseNumber = "154",
                     StreetAddress = "Mall Road",
@@ -628,7 +628,7 @@ namespace DotNetRestaurantManagement.Tests.Services
             {
                 Name = "  Saini Restaurant  ",
                 Email = "  saini@test.com  ",
-                Address = new AddressRequest
+                Address = new RestaurantAddressRequest
                 {
                     HouseNumber = " 154 ",
                     StreetAddress = " Mall Road ",

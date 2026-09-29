@@ -9,7 +9,7 @@ using System.Web.Http;
 
 namespace DotNetRestaurantManagement.Controllers
 {
-    [RoutePrefix("api/owner/restaurants")]
+    [RoutePrefix("api/owner")]
     public class OwnerOrderController : ApiController
     {
         private readonly IOwnerOrderService _orderService;
@@ -20,7 +20,7 @@ namespace DotNetRestaurantManagement.Controllers
 
         [JwtAuthorize(UserRole.Owner)]
         [HttpGet]
-        [Route("orders")]
+        [Route("dashboard")]
         public async Task<IHttpActionResult> GetOrders([FromUri] DashboardOrderRequest request)
         {
             if (request == null)
@@ -35,9 +35,9 @@ namespace DotNetRestaurantManagement.Controllers
                 SuccessMessages.OrdersFetched));
         }
 
-        [JwtAuthorize(UserRole.Owner)]
+        [JwtAuthorize(UserRole.Owner, UserRole.SuperAdmin)]
         [HttpPatch]
-        [Route("{restaurantId:long}/orders/{orderId:long}")]
+        [Route("restaurants/{restaurantId:long}/orders/{orderId:long}")]
         public async Task<IHttpActionResult> UpdateOrderStatus(
             long restaurantId,
             long orderId,

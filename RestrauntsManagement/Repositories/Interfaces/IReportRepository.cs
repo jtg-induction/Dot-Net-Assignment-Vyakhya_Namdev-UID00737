@@ -8,7 +8,7 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
     public interface IReportRepository
     {
         Task<List<Top10OrderedItemsReport>> GetTopOrderedItems(
-            long ownerId,
+            long? ownerId,
             long? restaurantId,
             IEnumerable<long> excludedItemIds);
 
@@ -16,6 +16,6 @@ namespace DotNetRestaurantManagement.Repositories.Interfaces
             long restaurantId,
             int combinationSize,
             int limit);
-        Task<bool> CheckRestaurantBelongsToOwner(long? restaurantId, long ownerId);
+        Task<bool> CheckRestaurantBelongsToOwner(long? restaurantId, long? ownerId);
     }
 }

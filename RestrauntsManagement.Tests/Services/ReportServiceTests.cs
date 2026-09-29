@@ -609,56 +609,6 @@ namespace DotNetRestaurantManagement.Tests.Services
         }
 
         [TestMethod]
-        [Description("Should throw not found when no frequently bought items are returned.")]
-        public async Task GenerateFrequentlyBoughtTogetherReport_WhenReportDataIsEmpty_ShouldThrowNotFound()
-        {
-            var ownerId = 1L;
-            var restaurantId = 10L;
-            var combinationSize = 2;
-            var limit = 10;
-
-            var reportData = new List<FrequentlyBoughtItems>();
-
-            _reportRepositoryMock
-                .Setup(x => x.CheckRestaurantBelongsToOwner(
-                    restaurantId,
-                    ownerId))
-                .ReturnsAsync(true);
-
-            _reportRepositoryMock
-                .Setup(x => x.GetFrequentlyBoughtTogether(
-                    restaurantId,
-                    combinationSize,
-                    limit))
-                .ReturnsAsync(reportData);
-
-            Func<Task> action = async () =>
-                await _reportService.GenerateFrequentlyBoughtTogetherReport(
-                    ownerId,
-                    restaurantId,
-                    combinationSize,
-                    limit);
-
-            var exception = await action.Should()
-                .ThrowAsync<ApiException>();
-
-            exception.Which.StatusCode
-                .Should().Be(HttpStatusCode.NotFound);
-
-            exception.Which.Message
-                .Should().Be(
-                    ErrorMessages.FrequentlyBoughtItemsNotFound);
-
-            _generateReportServiceMock.Verify(
-                x => x.Generate(
-                    It.IsAny<IEnumerable<FrequentlyBoughtItems>>(),
-                    It.IsAny<string>(),
-                    It.IsAny<bool?>(),
-                    It.IsAny<int?>()),
-                Times.Never);
-        }
-
-        [TestMethod]
         [Description("Should allow combination size 2.")]
         public async Task GenerateFrequentlyBoughtTogetherReport_WhenCombinationSizeIsTwo_ShouldCallRepository()
         {

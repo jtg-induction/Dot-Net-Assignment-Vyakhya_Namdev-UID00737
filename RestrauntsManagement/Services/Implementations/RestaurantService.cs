@@ -32,6 +32,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 Email = x.Email,
                 Address = new RestaurantAddressDto
                 {
+                    Id = x.Address.Id,
                     HouseNumber = x.Address.HouseNumber,
                     StreetAddress = x.Address.StreetAddress,
                     City = x.Address.City,
@@ -39,7 +40,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
                     PinCode = x.Address.PinCode,
                     Country = x.Address.Country
                 },
-                Cuisine = x.Cuisine
+                Cuisine = x.Cuisine.ToString()
             })
             .OrderBy(x => x.Id);
 
@@ -58,7 +59,7 @@ namespace DotNetRestaurantManagement.Services.Implementations
                                                  Name = x.Name,
                                                  Price = x.Price,
                                                  PreparationTime = x.PreparationTime,
-                                                 Category = x.Category,
+                                                 Category = x.Category.ToString(),
                                                  QuantityAvailable = x.QuantityAvailable
                                              })
                                              .OrderBy(x => x.Id);

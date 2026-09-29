@@ -18,7 +18,7 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
             _context = context;
         }
         public async Task<List<Top10OrderedItemsReport>> GetTopOrderedItems(
-            long ownerId, long? restaurantId,
+            long? ownerId, long? restaurantId,
             IEnumerable<long> excludedItemIds)
         {
             var excludedIds = excludedItemIds == null
@@ -27,8 +27,13 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
 
             var topItems = _context.OrderItems
                 .Where(orderedItem =>
-                orderedItem.Order.Restaurant.OwnerId == ownerId
-                && orderedItem.Order.Status == OrderStatus.Delivered);
+                    orderedItem.Order.Status == OrderStatus.Delivered);
+
+            if (ownerId.HasValue)
+            {
+                topItems = topItems.Where(orderedItem =>
+                    orderedItem.Order.Restaurant.OwnerId == ownerId.Value);
+            }
 
             if (restaurantId.HasValue)
             {
@@ -195,7 +200,7 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                 .ToList();
         }
 
-        public async Task<bool> CheckRestaurantBelongsToOwner(long? restaurantId, long ownerId)
+        public async Task<bool> CheckRestaurantBelongsToOwner(long? restaurantId, long? ownerId)
         {
             return await _context.Restaurants
                 .AnyAsync(x => x.Id == restaurantId

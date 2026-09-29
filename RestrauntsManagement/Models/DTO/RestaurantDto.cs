@@ -9,6 +9,6 @@ namespace DotNetRestaurantManagement.Models.DTO
         public string Name { get; set; }
         public string Email { get; set; }
         public RestaurantAddressDto Address { get; set; }
-        public CuisineType Cuisine { get; set; }
+        public string Cuisine { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DotNetRestaurantManagement.Models.DTO
 {
@@ -10,7 +11,7 @@ namespace DotNetRestaurantManagement.Models.DTO
 
         public long CustomerId { get; set; }
         public string CustomerName { get; set; }
-
+        public List<OrderItemResponse> OrderedItems { get; set; }
         public long TotalItems { get; set; }
         public decimal TotalAmount { get; set; }
 

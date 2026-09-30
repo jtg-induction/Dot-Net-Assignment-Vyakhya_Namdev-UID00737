@@ -20,6 +20,7 @@
         public const string TopOrderReportPdfFileName = "Top10OrderedItems.pdf";
         public const string FrequentlyBoughtItemsPdfFileName = "FrequentlyBoughtTogether.pdf";
         public const string ItemCount = "ItemCount";
+        public const string SuperAdmin = "SuperAdmin";
 
     }
 }

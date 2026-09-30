@@ -55,7 +55,7 @@ namespace DotNetRestaurantManagement.Tests.Controllers
                     PinCode = "411001",
                     Country = "India"
                 },
-                Cuisine = (CuisineType)1
+                Cuisine = "Indian"
             }
         },
                 Page = 1,
@@ -159,7 +159,7 @@ namespace DotNetRestaurantManagement.Tests.Controllers
                 Name = "Paneer Tikka",
                 Price = 250,
                 PreparationTime = 20,
-                Category = (MenuCategory)1,
+                Category = "Starter",
                 QuantityAvailable = 10
             }
         },

@@ -13,7 +13,7 @@ namespace DotNetRestaurantManagement.Models.DTO
         [EnumDataType(typeof(CuisineType))]
         public CuisineType Cuisine { get; set; }
         [Required]
-        public AddressRequest Address { get; set; }
+        public RestaurantAddressRequest Address { get; set; }
         [Required]
         public OwnerRequest Owner { get; set; }
     }

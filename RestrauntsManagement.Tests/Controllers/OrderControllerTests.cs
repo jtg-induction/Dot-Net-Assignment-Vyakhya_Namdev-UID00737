@@ -196,7 +196,7 @@ namespace RestrauntsManagement.Tests.Controllers
 
                 TotalAmount = 560,
                 TotalItems = 3,
-                OrderStatus = OrderStatus.Placed,
+                OrderStatus = OrderStatus.Placed.ToString(),
 
                 Restaurant = new RestaurantResponse
                 {

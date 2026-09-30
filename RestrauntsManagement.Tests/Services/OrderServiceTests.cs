@@ -190,18 +190,18 @@ namespace RestrauntsManagement.Tests.Services
             var request = new PlaceOrderRequest
             {
                 Items = new List<OrderItemRequest>
-                        {
-                            new OrderItemRequest
-                            {
-                                MenuItemId = 32,
-                                Quantity = 2
-                            },
-                            new OrderItemRequest
-                            {
-                                MenuItemId = 33,
-                                Quantity = 1
-                            }
-                        },
+        {
+            new OrderItemRequest
+            {
+                MenuItemId = 32,
+                Quantity = 2
+            },
+            new OrderItemRequest
+            {
+                MenuItemId = 33,
+                Quantity = 1
+            }
+        },
                 DeliveryAddressId = 1,
                 RestaurantId = 13
             };
@@ -279,7 +279,7 @@ namespace RestrauntsManagement.Tests.Services
             capturedOrder.OrderedItems.Should().ContainSingle(x =>
                 x.MenuItemId == 32 &&
                 x.Quantity == 2 &&
-                x.Price == 360);
+                x.Price == 180);
 
             capturedOrder.OrderedItems.Should().ContainSingle(x =>
                 x.MenuItemId == 33 &&
@@ -376,7 +376,7 @@ namespace RestrauntsManagement.Tests.Services
                 },
                 TotalAmount = 560,
                 TotalItems = 3,
-                OrderStatus = OrderStatus.Placed,
+                OrderStatus = OrderStatus.Placed.ToString(),
                 Restaurant = new RestaurantResponse
                 {
                     RestaurantId = 10,

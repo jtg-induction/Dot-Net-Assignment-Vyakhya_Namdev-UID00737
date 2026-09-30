@@ -158,6 +158,15 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 RestaurantName = order.Restaurant.Name,
                 CustomerId = order.CustomerId,
                 CustomerName = order.Customer.Name,
+                OrderedItems = order.OrderedItems
+                .Select(item => new OrderItemResponse
+                {
+                    MenuItemId = item.MenuItemId,
+                    MenuItemName = item.MenuItem.Name,
+                    Quantity = item.Quantity,
+                    Price = item.Price
+                })
+                .ToList(),
                 TotalItems = order.TotalItems,
                 TotalAmount = order.TotalAmount,
                 Status = order.Status.ToString(),
@@ -246,18 +255,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             await _orderRepository.SaveChangesAsync();
             return new UpdateOrderStatus
             {
+                OrderId = orderId,
                 Status = order.Status
             };
-        }
-
-        Task<PaginationResult<DashboardOrderResponse>> IOwnerOrderService.GetOrdersAsync(long ownerId, DashboardOrderRequest request)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        Task<UpdateOrderStatus> IOwnerOrderService.UpdateOrderStatusAsync(long ownerId, long restaurantId, long orderId, UpdateOrderStatus request)
-        {
-            throw new System.NotImplementedException();
         }
     }
 }

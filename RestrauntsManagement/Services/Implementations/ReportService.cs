@@ -20,11 +20,11 @@ namespace DotNetRestaurantManagement.Services.Implementations
         }
 
         public async Task<byte[]> GenerateTopOrderedItemsReport(
-                long ownerId,
+                long? ownerId,
                 long? restaurantId,
                 IEnumerable<long> excludedItemIds)
         {
-            if (restaurantId != null)
+            if (ownerId.HasValue && restaurantId.HasValue)
             {
                 var owner = await _reportRepository
                                     .CheckRestaurantBelongsToOwner(restaurantId, ownerId);
@@ -47,19 +47,22 @@ namespace DotNetRestaurantManagement.Services.Implementations
         }
 
         public async Task<byte[]> GenerateFrequentlyBoughtTogetherReport(
-                long ownerId,
+                long? ownerId,
                 long restaurantId,
                 int combinationSize,
                 int limit)
         {
-            var owner = await _reportRepository.CheckRestaurantBelongsToOwner(
+            if (ownerId.HasValue)
+            {
+                var owner = await _reportRepository.CheckRestaurantBelongsToOwner(
                                                 restaurantId,
                                                 ownerId);
-            if (!owner)
-            {
-                throw new ApiException(
-                    HttpStatusCode.BadRequest,
-                    ErrorMessages.RestaurantDoesNotBelongsToUser);
+                if (!owner)
+                {
+                    throw new ApiException(
+                        HttpStatusCode.BadRequest,
+                        ErrorMessages.RestaurantDoesNotBelongsToUser);
+                }
             }
 
             if (combinationSize != 2 && combinationSize != 3)
@@ -69,16 +72,16 @@ namespace DotNetRestaurantManagement.Services.Implementations
                     ErrorMessages.FrequentlyBoughtTogetherSizeError);
             }
 
+            if (limit <= 0)
+            {
+                throw new ApiException(
+                    HttpStatusCode.BadRequest,
+                    ErrorMessages.InvalidLimit);
+            }
+
             var reportData = await _reportRepository.GetFrequentlyBoughtTogether(
                                                 restaurantId,
                                                 combinationSize, limit);
-
-            if (!reportData.Any())
-            {
-                throw new ApiException(
-                    HttpStatusCode.NotFound,
-                    ErrorMessages.FrequentlyBoughtItemsNotFound);
-            }
 
             return _generateReportService.Generate(
                     reportData,

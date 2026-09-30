@@ -22,14 +22,17 @@ namespace DotNetRestaurantManagement.Controllers
             _reportService = reportService;
         }
 
-        [JwtAuthorize(UserRole.Owner)]
+        [JwtAuthorize(UserRole.Owner, UserRole.SuperAdmin)]
         [HttpGet]
         [Route("top-ordered-items")]
         public async Task<HttpResponseMessage> GetTopOrderedItemsReport(
             [FromUri] long? restaurantId = null,
             [FromUri] IEnumerable<long> excludeItemIds = null)
         {
-            var ownerId = ClaimsHelper.GetUserId(User);
+            var isSuperAdmin = User.IsInRole(StringConstants.SuperAdmin);
+            long? ownerId = isSuperAdmin
+                ? (long?)null
+                : ClaimsHelper.GetUserId(User);
             var excludedItemIds = excludeItemIds;
             var report = await _reportService.GenerateTopOrderedItemsReport(
                 ownerId,
@@ -50,7 +53,7 @@ namespace DotNetRestaurantManagement.Controllers
             return response;
         }
 
-        [JwtAuthorize(UserRole.Owner)]
+        [JwtAuthorize(UserRole.Owner, UserRole.SuperAdmin)]
         [HttpGet]
         [Route("{restaurantId}/frequently-bought-together")]
         public async Task<HttpResponseMessage> GetFrequentlyBoughtTogetherReport(
@@ -58,7 +61,10 @@ namespace DotNetRestaurantManagement.Controllers
             int combinationSize,
             int limit)
         {
-            var ownerId = ClaimsHelper.GetUserId(User);
+            var isSuperAdmin = User.IsInRole(StringConstants.SuperAdmin);
+            long? ownerId = isSuperAdmin
+                ? (long?)null
+                : ClaimsHelper.GetUserId(User);
             var report = await _reportService.GenerateFrequentlyBoughtTogetherReport(
                 ownerId,
                 restaurantId,

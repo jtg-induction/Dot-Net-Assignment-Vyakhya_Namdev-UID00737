@@ -8,7 +8,7 @@ namespace DotNetRestaurantManagement.Models.DTO
         public AddressResponse DeliveryAddress { get; set; } 
         public decimal TotalAmount { get; set; } 
         public long TotalItems { get; set; } 
-        public OrderStatus OrderStatus { get; set; } 
+        public string OrderStatus { get; set; } 
         public RestaurantResponse Restaurant { get; set; }
     }
 }

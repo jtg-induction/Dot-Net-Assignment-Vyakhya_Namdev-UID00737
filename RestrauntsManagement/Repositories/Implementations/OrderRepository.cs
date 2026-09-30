@@ -71,6 +71,7 @@ namespace DotNetRestaurantManagement.Repositories
                         .Select(o => new OrderItemResponse
                         {
                             MenuItemId = o.MenuItemId,
+                            MenuItemName = o.MenuItem.Name,
                             Quantity = o.Quantity,
                             Price = o.Price
                         })
@@ -90,7 +91,7 @@ namespace DotNetRestaurantManagement.Repositories
 
                     TotalAmount = x.TotalAmount,
                     TotalItems = x.TotalItems,
-                    OrderStatus = x.Status,
+                    OrderStatus = x.Status.ToString(),
                     Restaurant = new RestaurantResponse
                     {
                         RestaurantId = x.Restaurant.Id,

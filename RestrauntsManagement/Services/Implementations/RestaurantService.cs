@@ -8,7 +8,6 @@ using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Interfaces;
 using System.Net;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Services.Implementations
@@ -23,6 +22,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             _userRepository = userRepository;
         }
 
+        /// <summary>
+        /// Gets all active restaurants with their details and applies pagination to the result
+        /// </summary>
         public async Task<PaginationResult<RestaurantDto>> GetRestaurantsDetailsAsync(PaginationRequest request)
         {
             var query = _restaurantRepository.GetActiveRestaurants().Select(x => new RestaurantDto
@@ -47,6 +49,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             return await PaginationHelper.CreateAsync(query, request);
         }
 
+        /// <summary>
+        /// Gets the available menu items of an active restaurant and applies pagination to the result
+        /// </summary>
         public async Task<PaginationResult<MenuItemDto>> GetRestaurantMenuAsync(long restaurantId, PaginationRequest request)
         {
             var restaurant = _restaurantRepository.getActiveRestaurantById(restaurantId);
@@ -65,6 +70,10 @@ namespace DotNetRestaurantManagement.Services.Implementations
                                              .OrderBy(x => x.Id);
             return await PaginationHelper.CreateAsync(query, request);
         }
+
+        /// <summary>
+        /// Creates a new restaurant owner or assigns an existing user as the restaurant owner
+        /// </summary>
         private async Task<User> OnboardRestaurantOwner(OwnerRequest ownerRequest)
         {
             User owner;
@@ -121,6 +130,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             return owner;
         }
 
+        /// <summary>
+        /// Creates a restaurant with its address and assigns an existing or newly created owner to it
+        /// </summary>
         public async Task<OnboardRestaurantResponse> OnboardRestaurant(
             OnboardRestaurantRequest request)
         {

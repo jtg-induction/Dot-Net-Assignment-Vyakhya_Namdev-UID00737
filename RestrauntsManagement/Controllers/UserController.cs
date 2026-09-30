@@ -19,7 +19,9 @@ namespace DotNetRestaurantManagement.Controllers
             _userService = userService;
         }
 
-        /// Updates the current user's profile.
+        /// <summary>
+        /// Updates the profile details of the currently logged-in user
+        /// </summary>
         [JwtAuthorize]
         [HttpPatch]
         [Route("profile")]
@@ -30,7 +32,9 @@ namespace DotNetRestaurantManagement.Controllers
             return Ok(new ApiResponse<UpdateProfileResponse>(true, response, SuccessMessages.UserProfileUpdated));
         }
 
-        /// Changes the current user's password.
+        /// <summary>
+        /// Changes the password of the currently logged-in user
+        /// </summary>
         [JwtAuthorize]
         [HttpPut]
         [Route("password")]
@@ -41,7 +45,9 @@ namespace DotNetRestaurantManagement.Controllers
             return Ok(new ApiResponse<object>(true, SuccessMessages.PasswordUpdated));
         }
 
-        /// Deactivates the user's account from all devices and market it as in-active user
+        /// <summary>
+        /// Deactivates the current user's account and signs the user out from all devices
+        /// </summary>
         [JwtAuthorize]
         [HttpPut]
         [Route("deactivate")]

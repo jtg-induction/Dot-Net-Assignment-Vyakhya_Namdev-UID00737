@@ -17,10 +17,18 @@ namespace DotNetRestaurantManagement.Services.Implementations
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
 
-        public AuthService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository){
+        /// <summary>
+        /// Initializes the authentication service with the required repositories
+        /// </summary>
+        public AuthService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository)
+        {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
         }
+
+        /// <summary>
+        /// Creates a new customer account after validating the provided details
+        /// </summary>
         public async Task<SignupResponse> Signup(SignupRequest request)
         {
             string normalizedEmail = request.Email.Trim().ToLowerInvariant();
@@ -56,6 +64,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             };
         }
 
+        /// <summary>
+        /// Authenticates a user and generates access and refresh tokens
+        /// </summary>
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
             string normalizedEmail = request.Email.Trim().ToLowerInvariant();
@@ -89,6 +100,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             };
         }
 
+        /// <summary>
+        /// Validates a refresh token and generates a new access and refresh token
+        /// </summary>
         public async Task<RefreshTokenResponse> RefreshTokenAsync(string refreshToken)
         {
             string refreshTokenHash = TokenHelper.Hash(refreshToken);
@@ -121,6 +135,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             };
         }
 
+        /// <summary>
+        /// Logs out the user by removing the refresh token associated with the current session
+        /// </summary>
         public async Task LogoutAsync(long userId, long refreshTokenId)
         {
             var existingToken = await _refreshTokenRepository.GetByIdAsync(refreshTokenId);

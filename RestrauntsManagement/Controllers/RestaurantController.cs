@@ -20,28 +20,54 @@ namespace DotNetRestaurantManagement.Controllers
             _restaurantService = restaurantService;
         }
 
-        /// To get the details of all restaurants
+        /// <summary>
+        /// Gets a paginated list of all active restaurants
+        /// </summary>
         [HttpGet]
         [Route("")]
         public async Task<IHttpActionResult> GetRestaurants([FromUri] PaginationRequest request)
         {
             request = request ?? new PaginationRequest();
             var result = await _restaurantService.GetRestaurantsDetailsAsync(request);
-            return Ok(new ApiResponse<PaginationResult<RestaurantDto>>(true, result, SuccessMessages.RestaurantsListed));
+            var response = new RestaurantPaginationResult
+            {
+                Restaurants = result.Items,
+                Page = result.Page,
+                PageSize = result.PageSize,
+                TotalCount = result.TotalCount,
+                TotalPages = result.TotalPages,
+                HasPreviousPage = result.HasPreviousPage,
+                HasNextPage = result.HasNextPage
+            };
+            return Ok(new ApiResponse<RestaurantPaginationResult>(true, response, SuccessMessages.RestaurantsListed));
         }
 
-        /// To get the restaurants wise menu
+        /// <summary>
+        /// Gets the paginated menu items available at a specific restaurant
+        /// </summary>
         [HttpGet]
-        [Route("{restaurantId:long}/menu")]
+        [Route("{restaurantId}/menu")]
         public async Task<IHttpActionResult> GetRestaurantMenu(long restaurantId, [FromUri] PaginationRequest request)
         {
             request = request ?? new PaginationRequest();
             if (restaurantId <= 0) return BadRequest(ErrorMessages.InvalidRestaurantId);
             var result = await _restaurantService.GetRestaurantMenuAsync(restaurantId, request);
-            return Ok(new ApiResponse<PaginationResult<MenuItemDto>>(true, result, SuccessMessages.RestaurantMenuListed));
+            var response = new MenuPaginationResult
+            {
+                MenuItems = result.Items,
+                Page = result.Page,
+                PageSize = result.PageSize,
+                TotalCount = result.TotalCount,
+                TotalPages = result.TotalPages,
+                HasPreviousPage = result.HasPreviousPage,
+                HasNextPage = result.HasNextPage
+            };
+            return Ok(new ApiResponse<MenuPaginationResult>(true, response, SuccessMessages.RestaurantMenuListed));
         }
 
-        /// Onboard Restaurant
+        /// <summary>
+        /// Adds a new restaurant to the system
+        /// </summary>
         [JwtAuthorize(UserRole.SuperAdmin)]
         [HttpPost]
         [Route("")]

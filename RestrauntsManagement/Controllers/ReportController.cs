@@ -22,6 +22,9 @@ namespace DotNetRestaurantManagement.Controllers
             _reportService = reportService;
         }
 
+        /// <summary>
+        /// Generates and downloads a PDF report of the most ordered items
+        /// </summary>
         [JwtAuthorize(UserRole.Owner, UserRole.SuperAdmin)]
         [HttpGet]
         [Route("top-ordered-items")]
@@ -53,9 +56,12 @@ namespace DotNetRestaurantManagement.Controllers
             return response;
         }
 
+        /// <summary>
+        /// Generates and downloads a PDF report showing items that are frequently bought together
+        /// </summary>
         [JwtAuthorize(UserRole.Owner, UserRole.SuperAdmin)]
         [HttpGet]
-        [Route("{restaurantId}/frequently-bought-together")]
+        [Route("restaurants/{restaurantId}/frequently-bought-together")]
         public async Task<HttpResponseMessage> GetFrequentlyBoughtTogetherReport(
             long restaurantId,
             int combinationSize,

@@ -16,12 +16,23 @@ namespace DotNetRestaurantManagement.Services.Implementations
     {
         private readonly IAddressRepository _addressRepository;
         private readonly IUserRepository _userRepository;
-        public AddressService(IAddressRepository addressRepository, IUserRepository userRepository)
+        private readonly IUserValidatorService _userValidatorService;
+
+        /// <summary>
+        /// Initializes the address service with the required repositories
+        /// </summary>
+        public AddressService(IAddressRepository addressRepository, 
+                              IUserRepository userRepository,
+                              IUserValidatorService userValidatorService)
         {
             _addressRepository = addressRepository;
             _userRepository = userRepository;
+            _userValidatorService = userValidatorService;
         }
 
+        /// <summary>
+        /// Creates a new address and associates it with the specified user
+        /// </summary>
         private async Task<AddressResponse> CreateAddress(
             AddressRequest request,
             long userId)
@@ -58,46 +69,23 @@ namespace DotNetRestaurantManagement.Services.Implementations
             };
         }
 
+        /// <summary>
+        /// Adds a new address for the specified user
+        /// </summary>
         public async Task<AddressResponse> AddAddressAsync(
             long userId,
             AddressRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
-
+            await _userValidatorService.GetActiveUserAsync(userId);
             return await CreateAddress(request, userId);
         }
 
+        /// <summary>
+        /// Deactivates the existing address and creates a new address for the specified user
+        /// </summary>
         public async Task<AddressResponse> UpdateAddressAsync(long userId, long addressId, AddressRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
+            await _userValidatorService.GetActiveUserAsync(userId);
 
             var currentUserAddress =
                 await _addressRepository.GetUserAddressAsync(userId, addressId);
@@ -111,25 +99,14 @@ namespace DotNetRestaurantManagement.Services.Implementations
             return await CreateAddress(request, userId);
         }
 
+        /// <summary>
+        /// Gets an active address belonging to the specified user
+        /// </summary>
         public async Task<AddressResponse> GetAddressAsync(long userId, long addressId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
-
+            await _userValidatorService.GetActiveUserAsync(userId);
             var address = await _addressRepository.GetActiveUserAddressAsync(addressId, userId);
-            if(address == null)
+            if (address == null)
             {
                 throw new ApiException(HttpStatusCode.NotFound,
                                        ErrorMessages.AddressNotFound);
@@ -147,24 +124,12 @@ namespace DotNetRestaurantManagement.Services.Implementations
             };
         }
 
+        /// <summary>
+        /// Gets all active addresses belonging to the specified user
+        /// </summary>
         public async Task<List<AddressResponse>> GetAllUserAddressesAsync(long userId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
-
+            await _userValidatorService.GetActiveUserAsync(userId);
             var addresses = await _addressRepository.GetAllUserAddressesAsync(userId);
 
             return addresses.Select(address => new AddressResponse
@@ -180,23 +145,12 @@ namespace DotNetRestaurantManagement.Services.Implementations
             }).ToList();
         }
 
+        /// <summary>
+        /// Deactivates an address belonging to the specified user
+        /// </summary>
         public async Task RemoveUserAddressAsync(long userId, long addressId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
-
+            await _userValidatorService.GetActiveUserAsync(userId);
             var address = await _addressRepository.GetUserAddressAsync(userId, addressId);
             if (address == null)
             {

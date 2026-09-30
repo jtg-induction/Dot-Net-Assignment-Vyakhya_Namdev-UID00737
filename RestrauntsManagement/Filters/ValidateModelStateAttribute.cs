@@ -9,8 +9,14 @@ using System.Web.Http.Filters;
 
 namespace DotNetRestaurantManagement.Filters
 {
+    /// <summary>
+    /// Validates request model data and returns a bad request response when validation fails.
+    /// </summary>
     public class ValidateModelStateAttribute : ActionFilterAttribute
     {
+        /// <summary>
+        /// Checks the request body and model state before the controller action is executed.
+        /// </summary>
         public override void OnActionExecuting(HttpActionContext actionContext)
         {
             var bodyParameter = actionContext.ActionDescriptor
@@ -47,6 +53,7 @@ namespace DotNetRestaurantManagement.Filters
                 .ToDictionary(
                     group => RemoveRequestPrefix(group.Key, parameterName),
                     group => GetErrorMessages(
+                        RemoveRequestPrefix(group.Key, parameterName),
                         group.SelectMany(x => x.Value.Errors)
                     )
                 );
@@ -60,6 +67,9 @@ namespace DotNetRestaurantManagement.Filters
             );
         }
 
+        /// <summary>
+        /// Removes the request parameter name from the beginning of a model property name.
+        /// </summary>
         private static string RemoveRequestPrefix(
             string key,
             string parameterName)
@@ -75,13 +85,23 @@ namespace DotNetRestaurantManagement.Filters
                 : key;
         }
 
-        private static List<string> GetErrorMessages(IEnumerable<System.Web.Http.ModelBinding.ModelError> errors)
+        /// <summary>
+        /// Gets the validation error messages for a specific field.
+        /// </summary>
+        private static List<string> GetErrorMessages(string fieldName, IEnumerable<System.Web.Http.ModelBinding.ModelError> errors)
         {
             return errors
                 .Select(error =>
-                    !string.IsNullOrWhiteSpace(error.ErrorMessage)
-                    ? error.ErrorMessage
-                    : error.Exception?.Message)
+                {
+                    if (error.Exception != null)
+                    {
+                        return string.Format(
+                                ErrorMessages.InvalidFieldValue,
+                                fieldName);
+                    }
+
+                    return error.ErrorMessage;
+                })
                 .Where(message => !string.IsNullOrWhiteSpace(message))
                 .Distinct()
                 .ToList();

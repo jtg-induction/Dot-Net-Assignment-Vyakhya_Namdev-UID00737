@@ -18,17 +18,23 @@ namespace DotNetRestaurantManagement.Services
         private readonly IUserRepository _userRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IAddressRepository _addressRepository;
+        private readonly IUserValidatorService _userValidatorService;
 
         public OrderService(
             IUserRepository userRepository,
             IOrderRepository orderRepository,
-            IAddressRepository addressRepository)
+            IAddressRepository addressRepository,
+            IUserValidatorService userValidatorService)
         {
             _userRepository = userRepository;
             _orderRepository = orderRepository;
             _addressRepository = addressRepository;
+            _userValidatorService = userValidatorService;
         }
 
+        /// <summary>
+        /// Places a new order for the current user
+        /// </summary>
         public async Task<OrderResponse> PlaceOrderAsync(
             long userId,
             PlaceOrderRequest request)
@@ -107,8 +113,9 @@ namespace DotNetRestaurantManagement.Services
 
                     var menuItemById = menuItems.ToDictionary(x => x.Id);
                     var orderItems = new List<OrderItem>();
-                    foreach (var requestedItem in request.Items) {
-                        var menuItem = menuItemById[requestedItem.MenuItemId]; 
+                    foreach (var requestedItem in request.Items)
+                    {
+                        var menuItem = menuItemById[requestedItem.MenuItemId];
 
                         if (menuItem.QuantityAvailable < requestedItem.Quantity)
                         {
@@ -173,8 +180,11 @@ namespace DotNetRestaurantManagement.Services
             }
         }
 
+        /// <summary>
+        /// Gets the details of an order belonging to the current user
+        /// </summary>
         public async Task<OrderDetailsResponse> GetOrderDetailsAsync(
-            long orderId, 
+            long orderId,
             long userId)
         {
             var order = await _orderRepository.GetOrderDetailsAsync(orderId, userId);
@@ -188,12 +198,18 @@ namespace DotNetRestaurantManagement.Services
             return order;
         }
 
+        /// <summary>
+        /// Checks whether an order can be cancelled based on its current status
+        /// </summary>
         public static bool CanCancelOrder(OrderStatus status)
         {
             return status == OrderStatus.Placed ||
                    status == OrderStatus.Accepted;
         }
 
+        /// <summary>
+        /// Cancels an order and restores the ordered items and customer balance
+        /// </summary>
         public async Task<CancelOrderResponse> CancelOrderAsync(
            long orderId,
            long userId)
@@ -213,19 +229,7 @@ namespace DotNetRestaurantManagement.Services
                             ErrorMessages.OrderNotFound);
                     }
 
-                    var user = await _userRepository.GetByIdAsync(userId);
-                    if (user == null)
-                    {
-                        throw new ApiException(
-                            HttpStatusCode.Unauthorized,
-                            ErrorMessages.UserNotFound);
-                    }
-                    if (!user.IsActive)
-                    {
-                        throw new ApiException(
-                            HttpStatusCode.Forbidden,
-                            ErrorMessages.AccessDenied);
-                    }
+                    var user = await _userValidatorService.GetActiveUserAsync(userId);
 
                     if (!CanCancelOrder(order.Status))
                     {

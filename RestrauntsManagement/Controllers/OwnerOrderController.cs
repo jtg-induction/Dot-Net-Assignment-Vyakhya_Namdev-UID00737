@@ -18,6 +18,9 @@ namespace DotNetRestaurantManagement.Controllers
             _orderService = orderService;
         }
 
+        /// <summary>
+        /// Gets the orders for the restaurants managed by the currently logged-in owner
+        /// </summary>
         [JwtAuthorize(UserRole.Owner)]
         [HttpGet]
         [Route("dashboard")]
@@ -35,6 +38,9 @@ namespace DotNetRestaurantManagement.Controllers
                 SuccessMessages.OrdersFetched));
         }
 
+        /// <summary>
+        /// Updates the status of an order for a restaurant managed by the current user
+        /// </summary>
         [JwtAuthorize(UserRole.Owner, UserRole.SuperAdmin)]
         [HttpPatch]
         [Route("restaurants/{restaurantId:long}/orders/{orderId:long}")]

@@ -6,7 +6,6 @@ using DotNetRestaurantManagement.Models.Entities;
 using DotNetRestaurantManagement.Models.Enums;
 using DotNetRestaurantManagement.Repositories.Interfaces;
 using DotNetRestaurantManagement.Services.Interfaces;
-using DotNetRestaurantManagement.Models.DTO;
 using System;
 using System.Linq;
 using System.Net;
@@ -24,6 +23,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             _orderRepository = orderRepository;
         }
 
+        /// <summary>
+        /// Gets orders for the owner with search, filtering, sorting and pagination
+        /// </summary>
         public async Task<PaginationResult<DashboardOrderResponse>> GetOrdersAsync(
                 long ownerId,
                 DashboardOrderRequest request)
@@ -189,6 +191,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
                 request);
         }
 
+        /// <summary>
+        /// Validates whether an order can move from its current status to the requested status
+        /// </summary>
         private void ValidateStatus(
             OrderStatus currentStatus,
             OrderStatus newStatus)
@@ -231,9 +236,15 @@ namespace DotNetRestaurantManagement.Services.Implementations
             {
                 throw new ApiException(
                     HttpStatusCode.Conflict,
-                    ErrorMessages.OrderStatusCannotChange);
+                    string.Format(
+                    ErrorMessages.OrderStatusCannotChange,
+                    newStatus));
             }
         }
+
+        /// <summary>
+        /// Updates the status of an order belonging to the specified restaurant owner
+        /// </summary>
         public async Task<UpdateOrderStatus> UpdateOrderStatusAsync(
             long ownerId,
             long restaurantId,

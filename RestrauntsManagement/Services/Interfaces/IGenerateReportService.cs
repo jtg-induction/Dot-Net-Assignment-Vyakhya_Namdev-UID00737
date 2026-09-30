@@ -10,5 +10,9 @@ namespace DotNetRestaurantManagement.Services.Interfaces
                     string reportFileName,
                     bool? showRestaurantData = null,
                     int? itemCount = null);
+
+        byte[] GenerateFrequentlyBoughtTogether(
+            IEnumerable<FrequentlyBoughtItems> reportData,
+            int combinationSize);
     }
 }

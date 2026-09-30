@@ -5,8 +5,14 @@ using System.Security.Principal;
 
 namespace DotNetRestaurantManagement.Helpers
 {
+    /// <summary>
+    /// Provides helper methods for reading user information from JWT claims
+    /// </summary>
     public static class ClaimsHelper
     {
+        /// <summary>
+        /// Gets the user ID from the authenticated user's claims
+        /// </summary>
         public static long GetUserId(IPrincipal user)
         {
             var claimsPrincipal = user as ClaimsPrincipal;
@@ -19,6 +25,9 @@ namespace DotNetRestaurantManagement.Helpers
             return userId;
         }
 
+        /// <summary>
+        /// Gets the user's role from the authenticated user's claims
+        /// </summary>
         public static string GetUserRole(IPrincipal user)
         {
             var claimsPrincipal = user as ClaimsPrincipal;
@@ -31,6 +40,9 @@ namespace DotNetRestaurantManagement.Helpers
             return claim.Value;
         }
 
+        /// <summary>
+        /// Gets the refresh token ID from the authenticated user's claims
+        /// </summary>
         public static long GetRefreshTokenId(IPrincipal user)
         {
             var claimsPrincipal = user as ClaimsPrincipal;

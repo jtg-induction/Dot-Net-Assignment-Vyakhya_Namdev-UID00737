@@ -21,6 +21,9 @@
         public const string FrequentlyBoughtItemsPdfFileName = "FrequentlyBoughtTogether.pdf";
         public const string ItemCount = "ItemCount";
         public const string SuperAdmin = "SuperAdmin";
+        public const string ReportFileName = "FrequentlyBoughtTogetherReport";
+        public const string Title = "ReportTitle";
+        public const string ReportTitle = "Frequently Bought Together";
 
     }
 }

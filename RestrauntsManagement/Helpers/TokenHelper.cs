@@ -18,6 +18,10 @@ namespace DotNetRestaurantManagement.Helpers
     {
         private static readonly string _secret = ConfigurationManager.AppSettings[StringConstants.SecretJwt];
         private static readonly int _accessTokenExpiryTime = Convert.ToInt32(ConfigurationManager.AppSettings[StringConstants.AccessTokenExpiry]);
+
+        /// <summary>
+        /// Creates a SHA-256 hash of the given refresh token
+        /// </summary>
         public static string Hash(string refreshToken)
         {
             if (string.IsNullOrWhiteSpace(refreshToken))
@@ -39,6 +43,9 @@ namespace DotNetRestaurantManagement.Helpers
             }
         }
 
+        /// <summary>
+        /// Generates a JWT access token for the given user and refresh token
+        /// </summary>
         public static string GenerateAccessToken(User user, long refreshTokenId)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
@@ -61,6 +68,9 @@ namespace DotNetRestaurantManagement.Helpers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        /// <summary>
+        /// Generates a secure random refresh token
+        /// </summary>
         public static string GenerateRefreshToken()
         {
             byte[] randomBytes = new byte[64];

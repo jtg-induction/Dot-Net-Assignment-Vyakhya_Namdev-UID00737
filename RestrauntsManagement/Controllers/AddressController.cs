@@ -18,7 +18,9 @@ namespace DotNetRestaurantManagement.Controllers
             _addressService = addressService;
         }
 
-        /// Adds an address for the current user.
+        /// <summary>
+        /// Adds a new address for the currently logged-in user
+        /// </summary>
         [JwtAuthorize]
         [HttpPost]
         [Route("")]
@@ -29,7 +31,9 @@ namespace DotNetRestaurantManagement.Controllers
             return Created("", new ApiResponse<object>(true, response, SuccessMessages.AddressAdded));
         }
 
-        ///Updates the user address
+        /// <summary>
+        /// Updates an existing address of the currently logged-in user
+        /// </summary        
         [JwtAuthorize]
         [HttpPost]
         [Route("{addressId:long}")]
@@ -40,7 +44,9 @@ namespace DotNetRestaurantManagement.Controllers
             return Ok(new ApiResponse<object>(true, response, SuccessMessages.AddressUpdated));
         }
 
-        /// Read particular address
+        /// <summary>
+        /// Gets a specific address of the currently logged-in user
+        /// </summary>
         [JwtAuthorize]
         [HttpGet]
         [Route("{addressId:long}")]
@@ -51,7 +57,9 @@ namespace DotNetRestaurantManagement.Controllers
             return Ok(new ApiResponse<object>(true, response, SuccessMessages.AddressFetched));
         }
 
-        /// Read all address of user
+        /// <summary>
+        /// Gets all addresses of the currently logged-in user
+        /// </summary>
         [JwtAuthorize]
         [HttpGet]
         [Route("")]
@@ -66,7 +74,9 @@ namespace DotNetRestaurantManagement.Controllers
                 SuccessMessages.UserAddressFetched));
         }
 
-        /// Delete user address
+        /// <summary>
+        /// Removes an address from the currently logged-in user's addresses
+        /// </summary>
         [JwtAuthorize]
         [HttpPut]
         [Route("{addressId:long}")]

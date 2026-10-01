@@ -19,6 +19,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
             _generateReportService = generateReportService;
         }
 
+        /// <summary>
+        /// Generates a report containing the top ordered items for the requested restaurant or owner
+        /// </summary>
         public async Task<byte[]> GenerateTopOrderedItemsReport(
                 long? ownerId,
                 long? restaurantId,
@@ -46,6 +49,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
                                             showRestaurantData);
         }
 
+        /// <summary>
+        /// Generates a report showing items that are frequently bought together for a restaurant
+        /// </summary>
         public async Task<byte[]> GenerateFrequentlyBoughtTogetherReport(
                 long? ownerId,
                 long restaurantId,
@@ -83,10 +89,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
                                                 restaurantId,
                                                 combinationSize, limit);
 
-            return _generateReportService.Generate(
+            return _generateReportService.GenerateFrequentlyBoughtTogether(
                     reportData,
-                    StringConstants.FrequentlyBoughtItemsReportFileName,
-                    itemCount: combinationSize);
+                    combinationSize);
         }
     }
 }

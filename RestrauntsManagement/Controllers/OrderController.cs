@@ -19,7 +19,9 @@ namespace DotNetRestaurantManagement.Controllers
             _orderService = orderService;
         }
 
-        /// Places a new order for the current user.
+        /// <summary>
+        /// Places a new order for the currently logged-in user
+        /// </summary>
         [JwtAuthorize]
         [HttpPost]
         [Route("")]
@@ -30,7 +32,9 @@ namespace DotNetRestaurantManagement.Controllers
             return Created("", new ApiResponse<OrderResponse>(true, result, SuccessMessages.OrderPlaced));
         }
 
-        /// Fetching the order details made by user
+        /// <summary>
+        /// Gets the details of a specific order placed by the currently logged-in user
+        /// </summary>
         [JwtAuthorize]
         [HttpGet]
         [Route("{orderId:long}")]
@@ -46,6 +50,9 @@ namespace DotNetRestaurantManagement.Controllers
             ));
         }
 
+        /// <summary>
+        /// Cancels an order placed by the currently logged-in user
+        /// </summary>
         [HttpPatch]
         [Route("{orderId:long}")]
         [JwtAuthorize]

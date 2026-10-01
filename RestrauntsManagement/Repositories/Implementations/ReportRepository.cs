@@ -13,10 +13,18 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
     public class ReportRepository : IReportRepository
     {
         private readonly RestaurantDbContext _context;
+
+        /// <summary>
+        /// Initializes the report repository with the database context
+        /// </summary>
         public ReportRepository(RestaurantDbContext context)
         {
             _context = context;
         }
+
+        /// <summary>
+        /// Gets the most ordered menu items based on delivered orders
+        /// </summary>
         public async Task<List<Top10OrderedItemsReport>> GetTopOrderedItems(
             long? ownerId, long? restaurantId,
             IEnumerable<long> excludedItemIds)
@@ -68,6 +76,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Gets menu item combinations that are frequently bought together
+        /// </summary>
         public async Task<List<FrequentlyBoughtItems>> GetFrequentlyBoughtTogether(
             long restaurantId,
             int combinationSize, int limit)
@@ -80,6 +91,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
             return await GetFrequentlyBoughtTripletsAsync(restaurantId, limit);
         }
 
+        /// <summary>
+        /// Gets the most frequently bought pairs of menu items
+        /// </summary>
         private async Task<List<FrequentlyBoughtItems>> GetFrequentlyBoughtPairsAsync(
                 long restaurantId, int limit)
         {
@@ -132,6 +146,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                 .ToList();
         }
 
+        /// <summary>
+        /// Gets the most frequently bought combinations of three menu items
+        /// </summary>
         private async Task<List<FrequentlyBoughtItems>> GetFrequentlyBoughtTripletsAsync(
             long restaurantId, int limit)
         {
@@ -200,6 +217,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                 .ToList();
         }
 
+        /// <summary>
+        /// Checks whether the specified restaurant belongs to the given owner
+        /// </summary>
         public async Task<bool> CheckRestaurantBelongsToOwner(long? restaurantId, long? ownerId)
         {
             return await _context.Restaurants

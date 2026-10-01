@@ -15,17 +15,27 @@ namespace DotNetRestaurantManagement.Repositories
     public class OrderRepository : IOrderRepository
     {
         private readonly RestaurantDbContext _context;
+
+        /// <summary>
+        /// Initializes the order repository with the database context
+        /// </summary>
         public OrderRepository(RestaurantDbContext context)
         {
             _context = context;
         }
 
+        /// <summary>
+        /// Starts a database transaction with the specified isolation level
+        /// </summary>
         public ITransaction BeginTransaction(IsolationLevel isolationLevel)
         {
             var transaction = _context.Database.BeginTransaction(isolationLevel);
             return new Transaction(transaction);
         }
 
+        /// <summary>
+        /// Gets the menu items with the given IDs from a specific restaurant
+        /// </summary>
         public async Task<List<MenuItem>> GetMenuItemsAsync(
             IEnumerable<long> menuItemIds,
             long restaurantId)
@@ -37,6 +47,9 @@ namespace DotNetRestaurantManagement.Repositories
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Gets an order belonging to the specified user
+        /// </summary>
         public async Task<Order> GetOrderAsync(
                 long orderId,
                 long userId)
@@ -45,16 +58,26 @@ namespace DotNetRestaurantManagement.Repositories
                 .FirstOrDefaultAsync(x => x.Id == orderId && 
                 x.CustomerId == userId);
         }
+
+        /// <summary>
+        /// Adds a new order to the database context
+        /// </summary>
         public void AddOrder(Order order)
         {
             _context.Orders.Add(order);
         }
 
+        /// <summary>
+        /// Adds an order item to the database context
+        /// </summary>
         public void AddOrderItem(OrderItem orderItem)
         {
             _context.OrderItems.Add(orderItem);
         }
 
+        /// <summary>
+        /// Gets the details of an order belonging to the specified user
+        /// </summary>
         public async Task<OrderDetailsResponse> GetOrderDetailsAsync(
                 long orderId,
                 long userId)
@@ -113,6 +136,9 @@ namespace DotNetRestaurantManagement.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        /// <summary>
+        /// Saves the pending changes to the database
+        /// </summary>
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

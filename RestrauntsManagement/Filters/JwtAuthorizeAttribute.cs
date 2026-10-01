@@ -14,15 +14,25 @@ using System.Web.Http.Controllers;
 
 namespace DotNetRestaurantManagement.Filters
 {
+    /// <summary>
+    /// Authorizes API requests using a JWT bearer token and optionally checks the user's role.
+    /// </summary>
     public class JwtAuthorizeAttribute : AuthorizeAttribute
     {
         private readonly string[] _allowedRoles;
+        /// <summary>
+        /// Creates the authorization attribute with the roles allowed to access the endpoint.
+        /// </summary>
         public JwtAuthorizeAttribute(params UserRole[] roles)
         {
             _allowedRoles = roles
                 .Select(role => role.ToString())
                 .ToArray();
         }
+
+        /// <summary>
+        /// Validates the JWT token and checks whether the user has the required role.
+        /// </summary>
         protected override bool IsAuthorized(HttpActionContext actionContext)
         {
             try

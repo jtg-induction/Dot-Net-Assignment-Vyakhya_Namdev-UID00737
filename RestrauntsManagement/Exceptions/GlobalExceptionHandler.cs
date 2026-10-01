@@ -10,8 +10,14 @@ using System.Web.Http.Results;
 
 namespace DotNetRestaurantManagement
 {
+    /// <summary>
+    /// Handles unhandled exceptions and returns a consistent API error response
+    /// </summary>
     public class GlobalExceptionHandler : ExceptionHandler
     {
+        /// <summary>
+        /// Handles the exception and creates an API response with the appropriate HTTP status code and message
+        /// </summary>
         public override Task HandleAsync(
             ExceptionHandlerContext context,
             CancellationToken cancellationToken)

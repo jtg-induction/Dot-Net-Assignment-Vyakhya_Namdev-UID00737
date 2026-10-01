@@ -18,31 +18,23 @@ namespace DotNetRestaurantManagement.Services.Implementations
     {
         private readonly IUserRepository _userRepository;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
-        public UserService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository)
+        private readonly IUserValidatorService _userValidatorService;
+        public UserService(IUserRepository userRepository, IRefreshTokenRepository refreshTokenRepository,
+                           IUserValidatorService userValidatorService)
         {
             _userRepository = userRepository;
             _refreshTokenRepository = refreshTokenRepository;
+            _userValidatorService = userValidatorService;
         }
 
+        /// <summary>
+        /// Updates the current user's name or phone number after checking that the user is active and the new phone number is not already used by another user
+        /// </summary>
         public async Task<UpdateProfileResponse> UpdateProfileAsync(
             long userId,
             UpdateProfileRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
+            var user = await _userValidatorService.GetActiveUserAsync(userId);
 
             if (!string.IsNullOrWhiteSpace(request.Name))
             {
@@ -84,25 +76,14 @@ namespace DotNetRestaurantManagement.Services.Implementations
             };
         }
 
+        /// <summary>
+        /// Changes the user's password after verifying the current password and making sure the new password is different
+        /// </summary>
         public async Task ChangePasswordAsync(
             long userId,
             ChangePasswordRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
+            var user = await _userValidatorService.GetActiveUserAsync(userId);
 
             bool isCurrentPasswordValid =
                 PasswordHashingHelper.Verify(
@@ -134,22 +115,12 @@ namespace DotNetRestaurantManagement.Services.Implementations
             await _userRepository.SaveChangesAsync();
         }
 
+        /// <summary>
+        /// Deactivates the user's account and removes all refresh tokens so the account is logged out from all devices
+        /// </summary>
         public async Task DeactivateAccountAsync(long userId, long refreshTokenId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Unauthorized,
-                    ErrorMessages.NotAuthorized);
-            }
-            if (!user.IsActive)
-            {
-                throw new ApiException(
-                    HttpStatusCode.Forbidden,
-                    ErrorMessages.AccessDenied);
-            }
-
+            var user = await _userValidatorService.GetActiveUserAsync(userId);
             user.IsActive = false;
 
             if (refreshTokenId > 0)

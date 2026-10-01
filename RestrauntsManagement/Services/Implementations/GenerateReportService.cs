@@ -1,4 +1,6 @@
 ﻿using DotNetRestaurantManagement.Constants;
+using DotNetRestaurantManagement.Models.DTO;
+using DotNetRestaurantManagement.Reports;
 using DotNetRestaurantManagement.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,6 +13,9 @@ namespace DotNetRestaurantManagement.Services.Implementations
 {
     public class GenerateReportService : IGenerateReportService
     {
+        /// <summary>
+        /// Generates a PDF report using the specified data and report template
+        /// </summary>
         public byte[] Generate<T>(
             IEnumerable<T> reportData,
             string reportFileName,
@@ -55,6 +60,32 @@ namespace DotNetRestaurantManagement.Services.Implementations
                     StringConstants.ItemCount
                 ].Value = itemCount.Value;
             }
+
+            var reportSource = new InstanceReportSource
+            {
+                ReportDocument = report
+            };
+
+            var reportProcessor = new ReportProcessor();
+
+            var result = reportProcessor.RenderReport(
+                "PDF",
+                reportSource,
+                null);
+
+            return result.DocumentBytes;
+        }
+
+        /// <summary>
+        /// Generates PDF of .cs file Frequently Bought Items report 
+        /// </summary>
+        public byte[] GenerateFrequentlyBoughtTogether(
+            IEnumerable<FrequentlyBoughtItems> reportData,
+            int combinationSize)
+        {
+            var report = new FrequentlyBoughtTogetherReport(
+                reportData,
+                combinationSize);
 
             var reportSource = new InstanceReportSource
             {

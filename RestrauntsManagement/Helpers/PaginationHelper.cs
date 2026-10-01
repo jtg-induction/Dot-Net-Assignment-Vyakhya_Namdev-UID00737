@@ -6,8 +6,15 @@ using System.Threading.Tasks;
 
 namespace DotNetRestaurantManagement.Helpers
 {
+    /// <summary>
+    /// Provides common functionality for creating paginated results
+    /// </summary>
     public class PaginationHelper
     {
+
+        /// <summary>
+        /// Creates a paginated result from the given query and pagination request
+        /// </summary>
         public static async Task<PaginationResult<T>> CreateAsync<T>(IQueryable<T> query, PaginationRequest request)
         {
             var totalCount = await query.CountAsync();

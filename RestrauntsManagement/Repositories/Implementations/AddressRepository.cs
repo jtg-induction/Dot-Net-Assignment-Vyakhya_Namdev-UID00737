@@ -13,10 +13,17 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
     {
         protected readonly RestaurantDbContext _context;
 
+        /// <summary>
+        /// Initializes the address repository with the database context
+        /// </summary>
         public AddressRepository(RestaurantDbContext context)
         {
             _context = context;
         }
+
+        /// <summary>
+        /// Gets an active address mapping for a specific user and address
+        /// </summary>
         public async Task<UserAddress> GetUserAddressAsync(long userId, long addressId)
         {
             return await _context.UserAddresses
@@ -26,6 +33,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                     ua.IsActive);
         }
 
+        /// <summary>
+        /// Gets an active address belonging to a specific user
+        /// </summary>
         public async Task<Address> GetActiveUserAddressAsync(long addressId, long userId)
         {
             return await _context.UserAddresses
@@ -36,6 +46,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                         .FirstOrDefaultAsync();
         }
 
+        /// <summary>
+        /// Gets all active addresses belonging to a specific user
+        /// </summary>
         public async Task<List<Address>> GetAllUserAddressesAsync(long userId)
         {
             return await _context.UserAddresses
@@ -44,6 +57,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Adds a new address and links it to the specified user
+        /// </summary>
         public void AddUserAddress(Address address, UserAddress userAddress)
         {
             _context.Addresses.Add(address);
@@ -51,6 +67,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
             _context.UserAddresses.Add(userAddress);
         }
 
+        /// <summary>
+        /// Checks whether an active address belongs to the specified user
+        /// </summary>
         public async Task<bool> DoesAddressBelongsToUserAsync(
             long userId,
             long addressId)
@@ -62,6 +81,9 @@ namespace DotNetRestaurantManagement.Repositories.Implementations
                     x.IsActive);
         }
 
+        /// <summary>
+        /// Saves the pending changes to the database
+        /// </summary>
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
